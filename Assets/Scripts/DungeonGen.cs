@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -31,32 +32,39 @@ public class DungeonGen : MonoBehaviour
     public void runGeneration()
     {
         var grid = new Grid(RoomGap, NumAttempts);
-        int maxRooms = Random.Range(7,8);
-        while (NumAttempts < 1000 && grid.rooms.Count < maxRooms)
+        int maxRooms = UnityEngine.Random.Range(7,8);
+        while (NumAttempts < 1000 && grid.Rooms.Count < maxRooms)
         {
             var room = new Room(MinWidth, MaxWidth, MinHeight, MaxHeight, Proportion, AreaMin, NumPasses);
             grid.addRoom(room);
             NumAttempts++;
         }
+        grid.updateHashSetOfTiles();
+        foreach (var tile in grid.Tiles)
+        {
+            Console.WriteLine($"{tile.x}, {tile.y}");
+        }
     }
 }
 public class Grid
 {
-    public List<Room> rooms;
+    public List<Room> Rooms;
     private int RoomGap;
     private int NumAttempts;
+    public HashSet<Vector2Int> Tiles;
     public Grid(int roomGap = 2, int numAttempts = 1000)
     {
-        rooms = new List<Room>();
+        Rooms = new List<Room>();
         RoomGap = roomGap;
         NumAttempts = numAttempts;
+        Tiles = new HashSet<Vector2Int>{};
     }
 
     private bool doesOverlap(Rect rect)
     {
-        foreach (Room room in rooms)
+        foreach (Room room in Rooms)
         {
-            if (rect.Overlaps(room.rect))
+            if (rect.Overlaps(room.Rect))
             {
                 return true;
             }
@@ -66,41 +74,58 @@ public class Grid
 
     public bool addRoom(Room room)
     {
-        if (room.isEmpty)
+        if (room.IsEmpty)
         {
             return false;
         }
         room.makeRectangle();
-        if (rooms.Count == 0)
+        if (Rooms.Count == 0)
         {
-            room.rect.center = new Vector2Int(0,0);
-            rooms.Add(room);
+            room.Rect.center = new Vector2Int(0,0);
+            Rooms.Add(room);
         }
         else
         {
-            room.rect.center = new Vector2Int(0,0);
-            var angle = Random.Range(0f, 360f) / 180f * Mathf.PI;
+            room.Rect.center = new Vector2Int(0,0);
+            var angle = UnityEngine.Random.Range(0f, 360f) / 180f * Mathf.PI;
             var movement = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * 4;
             movement = new Vector2Int((int)movement.x, (int)movement.y);
             bool valid = true;
             while (!valid)
             {
-                room.rect.center += movement;
-                if (!doesOverlap(room.rect))
+                room.Rect.center += movement;
+                if (!doesOverlap(room.Rect))
                 {
                     valid = true;
                 }
             }
-            rooms.Add(room);
+            Rooms.Add(room);
         }
-        return true;
-        
+        return true; 
+    }
+
+    public void updateHashSetOfTiles()
+    {
+        foreach (Room room in Rooms)
+        {
+            for (int x = 0; x < room.Rect.width; x++)
+            {
+                for (int y = 0; y < room.Rect.height; y++)
+                {
+                    if (room.Grid[x+(int)room.Rect.x][y+(int)room.Rect.y])
+                    {
+                        Tiles.Add(new Vector2Int(x+(int)room.Rect.x, y+(int)room.Rect.y));
+                    }
+                }
+            }
+        }
     }
 }
 
 public class Room
 {
-    private List<List<bool>> grid;
+    public List<List<bool>> Grid
+    {private set; get;}
     private float Proportion;
     private int AreaMin;
     private int NumPasses;
@@ -110,8 +135,8 @@ public class Room
     private int MaxHeight;
     private int Width;
     private int Height;
-    public bool isEmpty = false;
-    public Rect rect;
+    public bool IsEmpty = false;
+    public Rect Rect;
     
     public Room(int minWidth, int maxWidth, int minHeight, int maxHeight, float proportion, int areaMin, int numPasses)
     {
@@ -122,46 +147,50 @@ public class Room
         Proportion = proportion;
         AreaMin = areaMin;
         NumPasses = numPasses;
-        grid = new List<List<bool>>();
+        Grid = new List<List<bool>>();
         var endLoop = false;
         int tryCount = 0;
         while (!endLoop && tryCount < 100)
         {
-            Width = Random.Range(MinWidth, MaxWidth);
-            Height = Random.Range(MinHeight, MaxHeight);
+            Width = UnityEngine.Random.Range(MinWidth, MaxWidth);
+            Height = UnityEngine.Random.Range(MinHeight, MaxHeight);
             createRoom();
             for (int i = 0; i < NumPasses; i++)
             {
                 cellularAutomataPass();
             }
-            makeRectangle();
-            if (getLargestRegion() && rect.width >= MinWidth && rect.height >= MinHeight)
+            if (getLargestRegion())
             {
-                getLargestRegion(target:false);
-                endLoop = true;
+                makeRectangle();
+                if (Rect.width >= MinWidth && Rect.height >= MinHeight)
+                {
+                    getLargestRegion(target:false);
+                    endLoop = true;
+                }
             }
             tryCount++;
         }
         if (endLoop == false)
         {
             Debug.Log("Failed to create room");
-            isEmpty = true;
-            rect = new Rect(0,0,0,0);
+            IsEmpty = true;
+            Rect = new Rect(0,0,0,0);
         }
         makeRectangle();
+        setTightRectangleGrid();
     }
 
     private void createRoom()
     {
         for (int x = 0; x < Width; x++)
         {
-            grid.Add(Enumerable.Repeat(false, Height).ToList());
+            Grid.Add(Enumerable.Repeat(false, Height).ToList());
         }
         for (int x = 2; x < Width-2; x++)
         {
             for (int y = 2; y < Height-2; y++)
             {
-                grid[x][y] = Random.Range(0f, 1f) < Proportion ? true : false;
+                Grid[x][y] = UnityEngine.Random.Range(0f, 1f) < Proportion ? true : false;
             }
         }
     }
@@ -169,19 +198,19 @@ public class Room
     private void cellularAutomataPass()
     {
         var newGrid = new List<List<bool>>();
-        for (int x = 0; x < grid.Count; x++)
+        for (int x = 0; x < Grid.Count; x++)
         {
-            newGrid.Add(Enumerable.Repeat(false, grid[0].Count).ToList());
+            newGrid.Add(Enumerable.Repeat(false, Grid[0].Count).ToList());
         }
-        for (int x = 1; x < grid.Count-1; x++)
+        for (int x = 1; x < Grid.Count-1; x++)
         {
-            for (int y = 1; y < grid[0].Count-1; y++)
+            for (int y = 1; y < Grid[0].Count-1; y++)
             {
                 var count = 0;
                 var adjacents = getAdjacents(x, y);
                 foreach (Vector2Int adjacent in adjacents)
                 {
-                    if (grid[adjacent.x][adjacent.y])
+                    if (Grid[adjacent.x][adjacent.y])
                     {
                         count++;
                     }
@@ -189,7 +218,7 @@ public class Room
                 newGrid[x][y] = count >= 4 ? true : false;
             }
         }
-        grid = newGrid;
+        Grid = newGrid;
     }
 
     private List<Vector2Int> getAdjacents(int x, int y, bool diagonals = true)
@@ -244,7 +273,7 @@ public class Room
         {
             for (int y = 0; y < Height; y++)
             {
-                if (grid[x][y] == target)
+                if (Grid[x][y] == target)
                 {
                     HashSet<Vector2Int> newRegion = new HashSet<Vector2Int>();
                     Vector2Int tile = new Vector2Int(x, y);
@@ -255,11 +284,11 @@ public class Room
                         if (!newRegion.Contains(tile))
                         {
                             newRegion.Add(tile);
-                            grid[tile.x][tile.y] = !target;
+                            Grid[tile.x][tile.y] = !target;
                             var neighbours = getAdjacents(tile.x, tile.y, diagonals:false);
                             foreach (Vector2Int neighbour in neighbours)
                             {
-                                if (grid[neighbour.x][neighbour.y] == target)
+                                if (Grid[neighbour.x][neighbour.y] == target)
                                 {
                                     if (!toBeFilled.Contains(neighbour) && !newRegion.Contains(neighbour))
                                     {
@@ -279,7 +308,7 @@ public class Room
         }
         foreach (Vector2Int tile in largestRegion)
         {
-            grid[tile.x][tile.y] = target;
+            Grid[tile.x][tile.y] = target;
         }
 
         if (largestRegion.Count < AreaMin)
@@ -289,22 +318,23 @@ public class Room
         return true;
     }
 
-    public List<List<bool>> getTightRectangle(int width = 0)
+    public void setTightRectangleGrid(int gap = 2)
     {
         makeRectangle();
         var gridCopy = new List<List<bool>>();
-        for (int x = 0; x < rect.width+2*width; x++) 
+        for (int x = 0; x < Rect.width; x++) 
         {
-            gridCopy.Add(Enumerable.Repeat(false, (int)rect.height+2*width).ToList());
+            gridCopy.Add(Enumerable.Repeat(false, (int)Rect.height).ToList());
         }
-        for (int x = 0; x < rect.width; x++)
+        for (int x = 0; x < Rect.width; x++)
         {
-            for (int y = 0; y < rect.height; y++)
+            for (int y = 0; y < Rect.height; y++)
             {
-                gridCopy[x+width][y+width] = grid[x+(int)rect.x][y+(int)rect.y];
+                gridCopy[x][y] = Grid[x+(int)Rect.x][y+(int)Rect.y];
             }
         }
-        return grid;
+        Grid = gridCopy;
+        return;
     }
 
     private int sum(List<bool> source)
@@ -316,7 +346,7 @@ public class Room
     {
         return Enumerable.Range(0, source[0].Count).Select(x => source[x][rowNumber]).ToList();
     }
-    public void makeRectangle()
+    public void makeRectangle(int gap = 2)
     {
         int minX = 0;
         int minY = 0;
@@ -324,29 +354,29 @@ public class Room
         int maxY = Height -1;
         try
         {
-            while (sum(grid[minX]) == 0)
+            while (sum(Grid[minX]) == 0)
             {
                 minX++;
             }
-            while (sum(grid[maxX]) == 0)
+            while (sum(Grid[maxX]) == 0)
             {
                 maxX --;
             }
-            while (sum(getRow(grid, minY)) == 0)
+            while (sum(getRow(Grid, minY)) == 0)
             {
                 minY ++;
             }
-            while (sum(getRow(grid, maxY)) == 0)
+            while (sum(getRow(Grid, maxY)) == 0)
             {
                 maxY --;
             }
         }
         catch
         {
-            rect = new Rect(0,0,0,0);
+            Rect = new Rect(0,0,0,0);
             return;
         }
-        rect = new Rect((int)minX, (int)minY, (int)maxX - minX, (int)maxY - minY);
+        Rect = new Rect(minX-gap, minY-gap, maxX - minX + 2*gap, maxY - minY+2*gap);
         return;
     }
 }
