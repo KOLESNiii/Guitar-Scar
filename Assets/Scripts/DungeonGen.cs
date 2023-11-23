@@ -23,6 +23,9 @@ public class DungeonGen : MonoBehaviour
     [SerializeField]
     private int RoomGap = 2;
 
+    [SerializeField]
+    private TilemapPainter tilemapPainter;
+
 
     public DungeonGen()
     {
@@ -32,18 +35,19 @@ public class DungeonGen : MonoBehaviour
     public void runGeneration()
     {
         var grid = new Grid(RoomGap, NumAttempts);
-        int maxRooms = UnityEngine.Random.Range(7,8);
-        while (NumAttempts < 1000 && grid.Rooms.Count < maxRooms)
+        int maxRooms = UnityEngine.Random.Range(7,9);
+        int attempts = 0;
+        while (attempts < NumAttempts && grid.Rooms.Count < maxRooms)
         {
             var room = new Room(MinWidth, MaxWidth, MinHeight, MaxHeight, Proportion, AreaMin, NumPasses);
             grid.addRoom(room);
-            NumAttempts++;
+            attempts++;
         }
+        Debug.Log("Finished generation");
         grid.updateHashSetOfTiles();
-        foreach (var tile in grid.Tiles)
-        {
-            Console.WriteLine($"{tile.x}, {tile.y}");
-        }
+        Debug.Log($"Number of rooms: {grid.Rooms.Count}");
+        Debug.Log($"Number of tiles: {grid.Tiles.Count}");
+        tilemapPainter.PaintFloorTiles(grid.Tiles);
     }
 }
 public class Grid
@@ -90,7 +94,7 @@ public class Grid
             var angle = UnityEngine.Random.Range(0f, 360f) / 180f * Mathf.PI;
             var movement = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * 4;
             movement = new Vector2Int((int)movement.x, (int)movement.y);
-            bool valid = true;
+            bool valid = false;
             while (!valid)
             {
                 room.Rect.center += movement;
@@ -108,11 +112,14 @@ public class Grid
     {
         foreach (Room room in Rooms)
         {
+            Debug.Log($"Room coordinates: {room.Rect.x}, {room.Rect.y}");
+            Debug.Log($"Room width: {room.Rect.width}, height: {room.Rect.height}");
+            Debug.Log($"Grid width: {room.Grid.Count}, height: {room.Grid[0].Count}");
             for (int x = 0; x < room.Rect.width; x++)
             {
                 for (int y = 0; y < room.Rect.height; y++)
                 {
-                    if (room.Grid[x+(int)room.Rect.x][y+(int)room.Rect.y])
+                    if (room.Grid[x][y])
                     {
                         Tiles.Add(new Vector2Int(x+(int)room.Rect.x, y+(int)room.Rect.y));
                     }
@@ -147,7 +154,6 @@ public class Room
         Proportion = proportion;
         AreaMin = areaMin;
         NumPasses = numPasses;
-        Grid = new List<List<bool>>();
         var endLoop = false;
         int tryCount = 0;
         while (!endLoop && tryCount < 100)
@@ -172,7 +178,7 @@ public class Room
         }
         if (endLoop == false)
         {
-            Debug.Log("Failed to create room");
+            Debug.LogWarning("Failed to create room");
             IsEmpty = true;
             Rect = new Rect(0,0,0,0);
         }
@@ -182,6 +188,7 @@ public class Room
 
     private void createRoom()
     {
+        Grid = new List<List<bool>>();
         for (int x = 0; x < Width; x++)
         {
             Grid.Add(Enumerable.Repeat(false, Height).ToList());
@@ -191,7 +198,7 @@ public class Room
             for (int y = 2; y < Height-2; y++)
             {
                 Grid[x][y] = UnityEngine.Random.Range(0f, 1f) < Proportion ? true : false;
-            }
+            }   
         }
     }
 
@@ -218,7 +225,7 @@ public class Room
                 newGrid[x][y] = count >= 4 ? true : false;
             }
         }
-        Grid = newGrid;
+        copyToGrid(newGrid);
     }
 
     private List<Vector2Int> getAdjacents(int x, int y, bool diagonals = true)
@@ -318,7 +325,7 @@ public class Room
         return true;
     }
 
-    public void setTightRectangleGrid(int gap = 2)
+    public void setTightRectangleGrid()
     {
         makeRectangle();
         var gridCopy = new List<List<bool>>();
@@ -333,8 +340,24 @@ public class Room
                 gridCopy[x][y] = Grid[x+(int)Rect.x][y+(int)Rect.y];
             }
         }
-        Grid = gridCopy;
+        Width = (int)Rect.width;
+        Height = (int)Rect.height;
+        copyToGrid(gridCopy);
         return;
+    }
+
+    private void copyToGrid(List<List<bool>> source)
+    {
+        Grid = new List<List<bool>>();
+        for (int x = 0; x < source.Count; x++)
+        {
+            var temp = new List<bool>();
+            for (int y = 0; y < source[0].Count; y++)
+            {
+                temp.Add(source[x][y]);
+            }
+            Grid.Add(temp);
+        }
     }
 
     private int sum(List<bool> source)
@@ -344,27 +367,31 @@ public class Room
     }
     private List<bool> getRow(List<List<bool>> source, int rowNumber)
     {
-        return Enumerable.Range(0, source[0].Count).Select(x => source[x][rowNumber]).ToList();
+        return Enumerable.Range(0, source.Count).Select(x => source[x][rowNumber]).ToList();
     }
     public void makeRectangle(int gap = 2)
     {
+        int count = 0;
         int minX = 0;
         int minY = 0;
-        int maxX = Width - 1;
-        int maxY = Height -1;
+        int maxX = Width-1;
+        int maxY = Height-1;
         try
         {
             while (sum(Grid[minX]) == 0)
             {
                 minX++;
+                count++;
             }
             while (sum(Grid[maxX]) == 0)
             {
                 maxX --;
+                count++;
             }
             while (sum(getRow(Grid, minY)) == 0)
             {
                 minY ++;
+                count++;
             }
             while (sum(getRow(Grid, maxY)) == 0)
             {
@@ -373,6 +400,7 @@ public class Room
         }
         catch
         {
+            Debug.LogWarning("Failed to make rectangle");
             Rect = new Rect(0,0,0,0);
             return;
         }
