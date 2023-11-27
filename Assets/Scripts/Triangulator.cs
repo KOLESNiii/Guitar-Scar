@@ -4,6 +4,7 @@ using UnityEngine;
 using DelaunatorSharp;
 using System.Linq;
 using System;
+using UnityEditor;
 
 public class Triangulator : MonoBehaviour
 {
@@ -34,7 +35,7 @@ public class Triangulator : MonoBehaviour
                 if (!edges.Contains(edge))
                 {
                     edges.Add(edge);
-                    Debug.DrawLine(new Vector3((float)point1.X, (float)point1.Y, 0), new Vector3((float)point2.X, (float)point2.Y, 0), Color.red, 1000);
+                    //Debug.DrawLine(new Vector3((float)point1.X, (float)point1.Y, 0), new Vector3((float)point2.X, (float)point2.Y, 0), Color.red, 1000);
                     appendToGraphCallback(point1, point2);
                 }
             }
@@ -51,11 +52,11 @@ public class Triangulator : MonoBehaviour
         return edgesOfTriangle(t).Select(e => Points[delaunator.Triangles[e]]);
     }
 }
-class Graph
+public class Graph
 {
     HashSet<Point> Vertices = new HashSet<Point>();
     HashSet<Edge> Edges = new HashSet<Edge>();
-    HashSet<Edge> SpanningTreeEdges = new HashSet<Edge>();
+    public HashSet<Edge> SpanningTreeEdges = new HashSet<Edge>();
     HashSet<Edge> ReintroducedEdges = new HashSet<Edge>();
 
     public void AppendToGraph(IPoint point1, IPoint point2)
@@ -130,7 +131,7 @@ class Graph
     {
         foreach (Edge edge in SpanningTreeEdges)
         {
-            Debug.DrawLine(new Vector3(edge.Points[0].x, edge.Points[0].y, 0), new Vector3(edge.Points[1].x, edge.Points[1].y, 0), Color.yellow, 1000);
+            Debug.DrawLine((Vector3)edge.Points[0], (Vector3)edge.Points[1], Color.yellow, 1000);
         }
     }
     private HashSet<Edge> getValidEdges(HashSet<Point> spanningTreeVertices)
@@ -189,26 +190,34 @@ class Graph
     {
         foreach (Edge edge in ReintroducedEdges)
         {
-            Debug.DrawLine(new Vector3(edge.Points[0].x, edge.Points[0].y, 0), new Vector3(edge.Points[1].x, edge.Points[1].y, 0), Color.blue, 1000);
+            Debug.DrawLine((Vector3)edge.Points[0], (Vector3)edge.Points[1], Color.blue, 1000);
         }
     }
     private IEnumerable<Edge> GetGoodEdges(IEnumerable<Edge> RemovedEdges)
     {
-        HashSet<Edge> goodEdges = new HashSet<Edge>();
+        HashSet<Edge> badEdges = new HashSet<Edge>();
         foreach (Edge remedge in RemovedEdges)
         {
             foreach (Point vertex in Vertices)
             {
                 foreach (Edge edge in vertex.Edges.Intersect(SpanningTreeEdges))
                 {
-                    if (Math.Abs(Vector2.Angle(edge.Direction, remedge.Direction)) > 30)
+                    if (!remedge.Points.Contains(vertex))
                     {
-                        goodEdges.Add(remedge);
+                        continue;
+                    }
+                    var d1 = edge.DirectionFromPoint(vertex);
+                    var d2 = remedge.DirectionFromPoint(vertex);
+                    var a1 = Mathf.Atan2(d1.y, d1.x);
+                    var a2 = Mathf.Atan2(d2.y, d2.x);
+                    if (Mathf.Abs(a1-a2) < Mathf.PI/6)
+                    {
+                        badEdges.Add(remedge);
                     }
                 }
             }
         }
-        return goodEdges;
+        return RemovedEdges.Except(badEdges);
     }
 }
 public class Edge
@@ -217,14 +226,11 @@ public class Edge
     {get; private set;}
     public float Length
     {get; private set;}
-    public Vector2 Direction;
     public Edge(Point point1, Point point2)
     {
         Points = new Point[]{point1, point2};
         Length = new Vector2(point1.x-point2.x, point1.y-point2.y).magnitude;
-        Direction = new Vector2(point1.x-point2.x, point1.y-point2.y);
     }
-
     public Point getOtherPoint(IEnumerable<Point> points)
     {
         if (points.Contains(Points[0]))
@@ -237,6 +243,22 @@ public class Edge
         }
         else
         {
+            throw new Exception("Point not in edge");
+        }
+    }
+    public Vector2Int DirectionFromPoint(Vector2Int point)
+    {
+        if (point == Points[0].ToVector2Int())
+        {
+            return Points[1]-Points[0];
+        }
+        else if (point == Points[1].ToVector2Int())
+        {
+            return Points[0]-Points[1];
+        }
+        else
+        {
+            Debug.Log("Edge: " + Points[0].ToVector2Int() + " " + Points[1].ToVector2Int() + " Point: " + point);
             throw new Exception("Point not in edge");
         }
     }
@@ -284,5 +306,25 @@ public class Point
     public void AddEdge(Edge edge)
     {
         Edges.Add(edge);
+    }
+
+    public static Point operator -(Point point1, Point point2)
+    {
+        return new Point(point1.x-point2.x, point1.y-point2.y);
+    }
+
+    public static implicit operator Vector2Int(Point point)
+    {
+        return new Vector2Int(point.x, point.y);
+    }
+    
+    public static explicit operator Vector3(Point point)
+    {
+        return new Vector3(point.x, point.y, 0);
+    }
+
+    public Vector2Int ToVector2Int()
+    {
+        return new Vector2Int(x, y);
     }
 }

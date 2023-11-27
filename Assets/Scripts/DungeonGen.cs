@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class DungeonGen : MonoBehaviour
@@ -20,6 +19,12 @@ public class DungeonGen : MonoBehaviour
     private int NumPasses = 7;
     [SerializeField]
     private int NumAttempts = 1000;
+    [SerializeField]
+    private int WidthCorridors = 3;
+    [SerializeField]
+    private int MinRooms = 7;
+    [SerializeField]
+    private int MaxRooms = 9;
     private int AreaMin;
 
     [SerializeField]
@@ -27,17 +32,45 @@ public class DungeonGen : MonoBehaviour
 
     [SerializeField]
     private Triangulator triangulator;
-
+    enum RoomType
+    {
+        Entrance,
+        Exit,
+        Enemy,
+        Loot,
+        StrongEnemy
+    }
 
     public DungeonGen()
     {
         AreaMin = (int)(MinWidth * MinHeight * 2.5);
+        if (MinHeight > MaxHeight)
+        {
+            throw new Exception("MinHeight cannot be greater than MaxHeight");
+        }
+        if (MinWidth > MaxWidth)
+        {
+            throw new Exception("MinWidth cannot be greater than MaxWidth");
+        }
+        if (NumPasses < 0)
+        {
+            throw new Exception("NumPasses cannot be less than 0");
+        }
+        if (Proportion < 0 || Proportion > 1)
+        {
+            throw new Exception("Proportion must be between 0 and 1");
+        }
+        if (WidthCorridors < 0)
+        {
+            throw new Exception("WidthCorridors cannot be less than 0");
+        }
+        
     }
 
     public void runGeneration()
     {
         var grid = new Grid();
-        int maxRooms = UnityEngine.Random.Range(7,9);
+        int maxRooms = UnityEngine.Random.Range(MinRooms,MaxRooms);
         int attempts = 0;
         while (attempts < NumAttempts && grid.Rooms.Count < maxRooms)
         {
@@ -52,14 +85,171 @@ public class DungeonGen : MonoBehaviour
             attempts++;
         }
         grid.updateHashSetOfTiles();
-        tilemapPainter.PaintFloorTiles(grid.Tiles);
+        // tilemapPainter.PaintFloorTiles(grid.Tiles);
         triangulator.Initialise(grid.getCentrePoints());
         Graph graph = new Graph();
         triangulator.Triangulate(graph.AppendToGraph);
         graph.PerformPrims();
-        graph.PrintPrims();
         graph.ReintroduceSomeRemovedEdges();
-        graph.PrintReintroducedEdges();
+        var corridors = graph.SpanningTreeEdges.Select(x => (new Vector2Int(x.Points[0].x, x.Points[0].y), new Vector2Int(x.Points[1].x, x.Points[1].y))).ToHashSet();
+        var tiles = grid.Tiles;
+        foreach (var corridor in corridors)
+        {
+            for (int i = 0; i < WidthCorridors; i++)
+            {
+                int offset = i == 0 ? 0 : i % 2 == 0 ? -((i+1)/2) : (i+1)/2;
+                // tilemapPainter.PaintFloorTiles(lineGenerator(OffsetVector2Int(corridor.Item1, corridor.Item2, offset)));
+                tiles.UnionWith(lineGenerator(OffsetVector2Int(corridor.Item1, corridor.Item2, offset)));
+            }
+        }
+        // tilemapPainter.PaintFloorTiles(tiles);
+        var rectAllGrid = getMaxGridSize(tiles);
+        rectAllGrid = padGrid(rectAllGrid, 3);
+        var valueArray = generateValueArray(tiles, rectAllGrid);
+        tilemapPainter.PaintFloorTiles(valueArray, new Vector2Int((int)rectAllGrid.x, (int)rectAllGrid.y));
+        tilemapPainter.PaintObjectTiles(grid.Tiles);
+    }
+
+    private ushort[,] generateValueArray(HashSet<Vector2Int> tiles, Rect grid)
+    {
+        var valueArray = new ushort[(int)grid.width, (int)grid.height];
+        for (int x = 0; x < grid.width; x++)
+        {
+            for (int y = 0; y < grid.height; y++)
+            {
+                valueArray[x,y] = getValueFromAdjacents(tiles, x+(int)grid.x, y+(int)grid.y);
+            }
+        }
+        return valueArray;
+    }
+
+    private ushort getValueFromAdjacents(HashSet<Vector2Int> tiles, int x, int y)
+    {
+        if (tiles.Contains(new Vector2Int(x,y)))
+        {
+            return 256;
+        }
+        ushort value = 0;
+        value += (ushort)(128 * getTileValue(tiles, x, y+1));
+        value += (ushort)(64 * getTileValue(tiles, x+1, y+1));
+        value += (ushort)(32 * getTileValue(tiles, x+1, y));
+        value += (ushort)(16 * getTileValue(tiles, x+1, y-1));
+        value += (ushort)(8 * getTileValue(tiles, x, y-1));
+        value += (ushort)(4 * getTileValue(tiles, x-1, y-1));
+        value += (ushort)(2 * getTileValue(tiles, x-1, y));
+        value += getTileValue(tiles, x-1, y+1);
+        return value;
+    }
+
+    private ushort getTileValue(HashSet<Vector2Int> tiles, int x, int y)
+    {
+        if (tiles.Contains(new Vector2Int(x,y)))
+        {
+            return 1;
+        }
+        return 0;
+    }
+
+    private Rect getMaxGridSize(IEnumerable<Vector2Int> allTiles)
+    {
+        int maxX = allTiles.Select(tile => tile.x).Max();
+        int minX = allTiles.Select(tile => tile.x).Min();
+        int maxY = allTiles.Select(tile => tile.y).Max();
+        int minY = allTiles.Select(tile => tile.y).Min();
+        return new Rect(minX, minY, maxX-minX, maxY-minY);
+    }
+
+    private Rect padGrid(Rect grid, int padding)
+    {
+        return new Rect(grid.x - padding, grid.y - padding, grid.width + 2*padding, grid.height + 2*padding);
+    }
+
+    private(Vector2Int, Vector2Int) OffsetVector2Int(Vector2Int vector1, Vector2Int vector2, int offset)
+    {
+        if (Vector2.Angle(vector2-vector1, Vector2.right) < 45f)
+        {
+            return (new Vector2Int(vector1.x, vector1.y + offset), new Vector2Int(vector2.x, vector2.y + offset));
+        }
+        return (new Vector2Int(vector1.x + offset, vector1.y), new Vector2Int(vector2.x + offset, vector2.y));
+    }
+
+    private IEnumerable<Vector2Int> lineGenerator((Vector2Int ,Vector2Int) vectors)
+    {
+        return lineGenerator(vectors.Item1, vectors.Item2);
+    }
+    private IEnumerable<Vector2Int> lineGenerator(Vector2Int point1, Vector2Int point2)
+    {
+        int x0 = point1.x;
+        int x1 = point2.x;
+        int y0 = point1.y;
+        int y1 = point2.y;
+        double tDeltaX;
+        double tDeltaY;
+        double tMaxX;
+        double tMaxY;
+        var dx = x1 - x0;
+        var dy = y1 - y0;
+        dx = (dx > 0) ? 1 : (dx < 0) ? -1 : 0;
+        dy = (dy > 0) ? 1 : (dy < 0) ? -1 : 0;
+        x1 += dx;
+        y1 += dy;
+        if (dx != 0)
+        {
+            tDeltaX = Math.Min((double)dx/(x1 - x0), double.MaxValue);
+        }
+        else
+        {
+            tDeltaX = double.MaxValue;
+        }
+        if (dx > 0)
+        {
+            tMaxX = tDeltaX;
+        }
+        else
+        {
+            tMaxX = 0;
+        }
+        if (dy != 0)
+        {
+            tDeltaY = Math.Min((double)dy/(y1 - y0), double.MaxValue);
+        }
+        else
+        {
+            tDeltaY = double.MaxValue;
+        }
+        if (dy > 0)
+        {
+            tMaxY = tDeltaY;
+        }
+        else
+        {
+            tMaxY = 0;
+        }
+        int i = 0;
+        while (true)
+        {
+            yield return new Vector2Int(x0, y0);
+            if (tMaxX < tMaxY)
+            {
+                tMaxX += tDeltaX;
+                x0 += dx;
+            }
+            else
+            {
+                tMaxY += tDeltaY;
+                y0 += dy;
+            }
+            if (tMaxX > 1 && tMaxY > 1)
+            {
+                yield break;
+            }
+            i ++;
+            if (i > 1000)
+            {
+                Debug.Log("tDeltaX: " + tDeltaX.ToString() + ", tDeltaY: " + tDeltaY.ToString() + ", tMaxX: " + tMaxX.ToString() + ", tMaxY: " + tMaxY.ToString() + ", x0: " + x0.ToString() + ", y0: " + y0.ToString() + ", dx: " + dx.ToString() + ", dy: " + dy.ToString());
+                throw new Exception("Infinite loop");
+            }
+        }
     }
 }
 public class Grid
@@ -144,7 +334,6 @@ public class Grid
         return output;
     }
 }
-
 public class Room
 {
     public List<List<bool>> Grid

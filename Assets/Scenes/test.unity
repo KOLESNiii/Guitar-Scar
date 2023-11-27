@@ -651,6 +651,73 @@ Tilemap:
     e31: 0
     e32: 0
     e33: 1
+--- !u!1 &1130633829
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1130633831}
+  - component: {fileID: 1130633830}
+  m_Layer: 0
+  m_Name: Helper
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1130633830
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1130633829}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 243b63e0f75442443bd368400134a87f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  floorTiles:
+  - {fileID: 11400000, guid: ddb1755871a9c64429cc1d60ac17b1b7, type: 2}
+  - {fileID: 11400000, guid: 66309f7b6543cb5478b2cc587511fe46, type: 2}
+  - {fileID: 11400000, guid: a698ebc31c29824448ede6cdf67ac132, type: 2}
+  - {fileID: 11400000, guid: e960a96a56941114eba56e14287e7fdb, type: 2}
+  - {fileID: 11400000, guid: 80d1d1c90f7023846a84d1994f2a8cd9, type: 2}
+  - {fileID: 11400000, guid: 97061640d3f26f54c8092c91a6f98ee0, type: 2}
+  - {fileID: 11400000, guid: b46015f4b924b3d48995e49b32e7230a, type: 2}
+  floorTileChance: 0.7
+  bottomRightWallTile: {fileID: 11400000, guid: 7ddd8b2becaf1de46b56481b0d7e261f, type: 2}
+  bottomLeftWallTile: {fileID: 11400000, guid: fdc03d4f9943861479a49720a277b9d3, type: 2}
+  topRightWallTile: {fileID: 11400000, guid: 9370ac512b1575e4fbc09131b5f500ca, type: 2}
+  topLeftWallTile: {fileID: 11400000, guid: 41623e3592d31e547b04cb15e2cf0d8a, type: 2}
+  topWallTile: {fileID: 11400000, guid: a44093b31bc84b84daf035b4518254ad, type: 2}
+  bottomWallTile: {fileID: 11400000, guid: 757ad851638087c46887841fd4d2d22a, type: 2}
+  leftWallTile: {fileID: 11400000, guid: 9f8999c8b89985c4ca7475a3f7e6b270, type: 2}
+  rightWallTile: {fileID: 11400000, guid: b72865a08f08dc746a5dd3750bdfcefc, type: 2}
+  bottomRightWallInverseTile: {fileID: 11400000, guid: 698d0226368177b4182ddb310357a127, type: 2}
+  bottomLeftWallInverseTile: {fileID: 11400000, guid: 603e868215e8c9b4f8db76758beb71c9, type: 2}
+  topRightWallInverseTile: {fileID: 11400000, guid: 8602db56460326240800650a335b6f47, type: 2}
+  topLeftWallInverseTile: {fileID: 11400000, guid: c38729a6a93e0a74d8f3d52ce2f05471, type: 2}
+  emptyTile: {fileID: 11400000, guid: de490a16b8d2a2d4e947d4dc8fca1c61, type: 2}
+  errorTile: {fileID: 11400000, guid: 5829d9a3a9d96e940be1c2e12d834c10, type: 2}
+--- !u!4 &1130633831
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1130633829}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -20.358595, y: -18.370409, z: -0.06890681}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 7
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1332531825
 GameObject:
   m_ObjectHideFlags: 0
@@ -682,6 +749,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   floorTilemap: {fileID: 853374739}
   floorTile: {fileID: 11400000, guid: 34d835bb445180c498ff0b89c094b73a, type: 2}
+  painterHelper: {fileID: 1130633830}
 --- !u!4 &1332531827
 Transform:
   m_ObjectHideFlags: 0
@@ -726,14 +794,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 64034a8e8bdb11445addf13a7be99a3d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Proportion: 0.4
-  MaxWidth: 50
-  MaxHeight: 50
+  Proportion: 0.425
+  MaxWidth: 25
+  MaxHeight: 25
   MinWidth: 10
   MinHeight: 10
-  NumPasses: 7
+  NumPasses: 8
   NumAttempts: 1000
-  RoomGap: 2
+  WidthCorridors: 1
+  MinRooms: 8
+  MaxRooms: 14
   tilemapPainter: {fileID: 1332531826}
   triangulator: {fileID: 42306456}
 --- !u!4 &1466266979
