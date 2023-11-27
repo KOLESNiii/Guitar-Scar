@@ -32,7 +32,7 @@ public class DungeonGen : MonoBehaviour
 
     [SerializeField]
     private Triangulator triangulator;
-    enum RoomType
+    public enum RoomType
     {
         Entrance,
         Exit,
@@ -98,16 +98,15 @@ public class DungeonGen : MonoBehaviour
             for (int i = 0; i < WidthCorridors; i++)
             {
                 int offset = i == 0 ? 0 : i % 2 == 0 ? -((i+1)/2) : (i+1)/2;
-                // tilemapPainter.PaintFloorTiles(lineGenerator(OffsetVector2Int(corridor.Item1, corridor.Item2, offset)));
                 tiles.UnionWith(lineGenerator(OffsetVector2Int(corridor.Item1, corridor.Item2, offset)));
             }
         }
-        // tilemapPainter.PaintFloorTiles(tiles);
         var rectAllGrid = getMaxGridSize(tiles);
         rectAllGrid = padGrid(rectAllGrid, 3);
         var valueArray = generateValueArray(tiles, rectAllGrid);
         tilemapPainter.PaintFloorTiles(valueArray, new Vector2Int((int)rectAllGrid.x, (int)rectAllGrid.y));
         tilemapPainter.PaintObjectTiles(grid.Tiles);
+        // TODO - assign room types
     }
 
     private ushort[,] generateValueArray(HashSet<Vector2Int> tiles, Rect grid)
@@ -349,6 +348,7 @@ public class Room
     private int Height;
     public bool IsEmpty = false;
     public Rect Rect;
+    public DungeonGen.RoomType Type;
     
     public Room(int minWidth, int maxWidth, int minHeight, int maxHeight, float proportion, int areaMin, int numPasses)
     {
