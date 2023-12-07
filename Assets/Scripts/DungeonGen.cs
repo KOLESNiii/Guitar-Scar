@@ -41,6 +41,7 @@ public class DungeonGen : MonoBehaviour
         StrongEnemy
     }
 
+    List<Room> Rooms;
     public DungeonGen()
     {
         AreaMin = (int)(MinWidth * MinHeight * 2.5);
@@ -85,7 +86,6 @@ public class DungeonGen : MonoBehaviour
             attempts++;
         }
         grid.updateHashSetOfTiles();
-        // tilemapPainter.PaintFloorTiles(grid.Tiles);
         triangulator.Initialise(grid.getCentrePoints());
         Graph graph = new Graph();
         triangulator.Triangulate(graph.AppendToGraph);
@@ -106,9 +106,23 @@ public class DungeonGen : MonoBehaviour
         var valueArray = generateValueArray(tiles, rectAllGrid);
         tilemapPainter.PaintFloorTiles(valueArray, new Vector2Int((int)rectAllGrid.x, (int)rectAllGrid.y));
         tilemapPainter.PaintObjectTiles(grid.Tiles);
-        // TODO - assign room types
-    }
+        setRoomTypes(grid);
 
+    }
+    private void setRoomTypes(Grid grid)
+    {
+        var tempRooms = grid.Rooms;
+        tempRooms.Find(x => x.Rect.center == new Vector2Int(0,0)).Type = RoomType.Entrance;
+        tempRooms.OrderBy(x => x.Rect.center.magnitude).First().Type = RoomType.Exit;
+        foreach (Room room in tempRooms)
+        {
+            if (room.Type != RoomType.Entrance && room.Type != RoomType.Exit)
+            {
+                room.Type = (RoomType)UnityEngine.Random.Range(2, 5);
+            }
+        }
+        Rooms = tempRooms;
+    }
     private ushort[,] generateValueArray(HashSet<Vector2Int> tiles, Rect grid)
     {
         var valueArray = new ushort[(int)grid.width, (int)grid.height];
@@ -121,7 +135,6 @@ public class DungeonGen : MonoBehaviour
         }
         return valueArray;
     }
-
     private ushort getValueFromAdjacents(HashSet<Vector2Int> tiles, int x, int y)
     {
         if (tiles.Contains(new Vector2Int(x,y)))
@@ -139,7 +152,6 @@ public class DungeonGen : MonoBehaviour
         value += getTileValue(tiles, x-1, y+1);
         return value;
     }
-
     private ushort getTileValue(HashSet<Vector2Int> tiles, int x, int y)
     {
         if (tiles.Contains(new Vector2Int(x,y)))
@@ -148,7 +160,6 @@ public class DungeonGen : MonoBehaviour
         }
         return 0;
     }
-
     private Rect getMaxGridSize(IEnumerable<Vector2Int> allTiles)
     {
         int maxX = allTiles.Select(tile => tile.x).Max();
@@ -157,12 +168,10 @@ public class DungeonGen : MonoBehaviour
         int minY = allTiles.Select(tile => tile.y).Min();
         return new Rect(minX, minY, maxX-minX, maxY-minY);
     }
-
     private Rect padGrid(Rect grid, int padding)
     {
         return new Rect(grid.x - padding, grid.y - padding, grid.width + 2*padding, grid.height + 2*padding);
     }
-
     private(Vector2Int, Vector2Int) OffsetVector2Int(Vector2Int vector1, Vector2Int vector2, int offset)
     {
         if (Vector2.Angle(vector2-vector1, Vector2.right) < 45f)
@@ -171,7 +180,6 @@ public class DungeonGen : MonoBehaviour
         }
         return (new Vector2Int(vector1.x + offset, vector1.y), new Vector2Int(vector2.x + offset, vector2.y));
     }
-
     private IEnumerable<Vector2Int> lineGenerator((Vector2Int ,Vector2Int) vectors)
     {
         return lineGenerator(vectors.Item1, vectors.Item2);
@@ -260,7 +268,6 @@ public class Grid
         Rooms = new List<Room>();
         Tiles = new HashSet<Vector2Int>{};
     }
-
     private bool doesOverlap(Rect rect)
     {
         foreach (Room room in Rooms)
@@ -305,7 +312,6 @@ public class Grid
         }
         return true; 
     }
-
     public void updateHashSetOfTiles()
     {
         foreach (Room room in Rooms)
@@ -322,7 +328,6 @@ public class Grid
             }
         }
     }
-
     public HashSet<Vector2Int> getCentrePoints()
     {
         var output = new HashSet<Vector2Int>();
