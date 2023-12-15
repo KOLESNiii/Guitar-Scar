@@ -1,16 +1,15 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
-public class Player : Character
+public class Player : Character, IDataPersistence
 {
     [SerializeField]
     private float armour = 100f;
     [SerializeField]
     private float maxArmour = 100f;
-    [SerializeField]
-    private float maxHealth = 100f;
     [SerializeField]
     private float tempMaxHealth = 100f;
     [SerializeField]
@@ -24,7 +23,9 @@ public class Player : Character
     [SerializeField]
     private float XPToNextLevel = 100;
     [SerializeField]
-    private float LevelUpMultiplier = 1.5f;
+    public HealthBar armourBar;
+    public ExtraBar healthBarExtra;
+    public ExtraBar armourBarExtra;
     // Start is called before the first frame update
     protected override void Start()
     {
@@ -35,6 +36,10 @@ public class Player : Character
     void Update()
     {
         var inputs = InputManager.getInputs();
+        if (isDead)
+        {
+            return;
+        }
         if (inBattle)
         {
             foreach (var input in inputs)
@@ -45,35 +50,40 @@ public class Player : Character
                 }
             }
         }
-        foreach (var input in inputs)
+        else
         {
-            if (input.type == InputManager.Type.Movement)
+            foreach (var input in inputs)
             {
-                int newAngle;
-                if (input.Movement == InputManager.Movement.Up)
+                if (input.type == InputManager.Type.Movement)
                 {
-                    newAngle = 90;
+                    int newAngle;
+                    if (input.Movement == InputManager.Movement.Up)
+                    {
+                        newAngle = 90;
+                    }
+                    else if (input.Movement == InputManager.Movement.Left)
+                    {
+                        newAngle = 180;
+                    }
+                    else if (input.Movement == InputManager.Movement.Down)
+                    {
+                        newAngle = 270;
+                    }
+                    else
+                    {
+                        newAngle = 0;
+                    }
+                    Turn(calculateAngleTurned(newAngle));
+                    Move();
                 }
-                else if (input.Movement == InputManager.Movement.Left)
-                {
-                    newAngle = 180;
-                }
-                else if (input.Movement == InputManager.Movement.Down)
-                {
-                    newAngle = 270;
-                }
-                else
-                {
-                    newAngle = 0;
-                }
-                Turn(calculateAngleTurned(newAngle));
-                Move();
             }
         }
     }
-
-    public override void takeDamage(float damage)
+    public void takeDamage(float damage)
     {
+        CurrentLevel.Instance.playerDamageTaken += damage;
+        animator.SetTrigger("isHit");
+
         if (armour > 0)
         {
             armour -= damage;
@@ -87,6 +97,10 @@ public class Player : Character
         {
             health -= damage;
         }
+        healthBar.SetValue(health, maxHealth);
+        armourBar.SetValue(armour, maxArmour);
+        armourBarExtra.SetValue(armour, maxArmour, tempMaxArmour);
+        healthBarExtra.SetValue(health, maxHealth, tempMaxHealth);
         if (health <= 0)
         {
             health = 0;
@@ -112,14 +126,16 @@ public class Player : Character
     }
     public void enterBattle(Battle battle)
     {
+        Debug.Log("Player entered battle");
         inBattle = true;
         this.battle = battle;
     }
-    public void exitBattle()
+    public override void exitBattle()
     {
         inBattle = false;
-        this.battle = null;
         LevelUp(battle.XPGain);
+        this.battle = null;
+        inBattle = false;
         armour = Math.Max(maxArmour, tempMaxArmour);
         // TODO: Autosave
     }
@@ -180,12 +196,34 @@ public class Player : Character
         {
             level++;
             XP -= XPToNextLevel;
-            damage *= LevelUpMultiplier;
-            maxHealth *= LevelUpMultiplier;
-            maxArmour *= LevelUpMultiplier;
+            damage *= Global.LevelUpMultiplier;
+            maxHealth *= Global.LevelUpMultiplier;
+            maxArmour *= Global.LevelUpMultiplier;
             regenArmour(maxArmour);
             heal(maxHealth);
-            XPToNextLevel *= (float)(1.5*LevelUpMultiplier);
+            XPToNextLevel *= (float)(1.5*Global.LevelUpMultiplier);
         }
+    }
+
+    public void LoadData(GameData data)
+    {
+        level = data.playerLevel;
+        XP = data.playerXP;
+        XPToNextLevel = Global.startingXPToNextLevel * (float)Math.Pow(1.5 * Global.LevelUpMultiplier, level);
+        damage = Global.startingDamage * (float)Math.Pow(Global.LevelUpMultiplier, level);
+        maxArmour = Global.startingArmour * (float)Math.Pow(Global.LevelUpMultiplier, level);
+        maxHealth = Global.startingHealth * (float)Math.Pow(Global.LevelUpMultiplier, level);
+        health = data.playerHealth;
+        armour = maxArmour;
+        tempMaxArmour = maxArmour;
+        tempMaxHealth = maxHealth;
+        tempDamage = damage;
+    }
+
+    public void SaveData(ref GameData data)
+    {
+        data.playerLevel = level;
+        data.playerXP = XP;
+        data.playerHealth = health;
     }
 }

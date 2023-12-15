@@ -9,11 +9,11 @@ TagManager:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - Player
   - Water
   - UI
-  - 
-  - 
+  - Enemy
+  - Portal
   - 
   - 
   - BlockingLayer
@@ -48,9 +48,15 @@ TagManager:
   - name: Items
     uniqueID: 221156801
     locked: 0
+  - name: BattleBackground
+    uniqueID: 451638973
+    locked: 0
   - name: Units
     uniqueID: 2474374253
     locked: 0
   - name: FogOfWar
     uniqueID: 2071324149
+    locked: 0
+  - name: UI
+    uniqueID: 3973137629
     locked: 0

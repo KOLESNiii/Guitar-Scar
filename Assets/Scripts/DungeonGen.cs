@@ -32,6 +32,10 @@ public class DungeonGen : MonoBehaviour
 
     [SerializeField]
     private Triangulator triangulator;
+    [SerializeField]
+    private GameObject Portal;
+    [SerializeField]
+    private GameObject Spawner;
     public enum RoomType
     {
         Entrance,
@@ -42,8 +46,9 @@ public class DungeonGen : MonoBehaviour
     }
 
     List<Room> Rooms;
-    public DungeonGen()
+    void Start()
     {
+        CurrentLevel.Instance.SetEnvironment(new Environment(new int[]{0,1,2,3,4,5,6,7,8}));
         AreaMin = (int)(MinWidth * MinHeight * 2.5);
         if (MinHeight > MaxHeight)
         {
@@ -65,7 +70,7 @@ public class DungeonGen : MonoBehaviour
         {
             throw new Exception("WidthCorridors cannot be less than 0");
         }
-        
+        runGeneration();
     }
 
     public void runGeneration()
@@ -107,22 +112,101 @@ public class DungeonGen : MonoBehaviour
         tilemapPainter.PaintFloorTiles(valueArray, new Vector2Int((int)rectAllGrid.x, (int)rectAllGrid.y));
         tilemapPainter.PaintObjectTiles(grid.Tiles);
         setRoomTypes(grid);
-
+        finishRoomAssignment();
     }
     private void setRoomTypes(Grid grid)
     {
+        Debug.Log("Start room assignment");
         var tempRooms = grid.Rooms;
-        tempRooms.Find(x => x.Rect.center == new Vector2Int(0,0)).Type = RoomType.Entrance;
-        tempRooms.OrderBy(x => x.Rect.center.magnitude).First().Type = RoomType.Exit;
+        var OutputRooms = new List<Room>();
+        var EntryRoom = tempRooms.Find(x => x.Rect.center == new Vector2Int(0,0));
+        EntryRoom.Type = RoomType.Entrance;
+        tempRooms.Remove(EntryRoom);
+        var ExitRoom = tempRooms.OrderBy(x => x.Rect.center.magnitude).Last();
+        ExitRoom.Type = RoomType.Exit;
+        tempRooms.Remove(ExitRoom);
+        OutputRooms.Add(EntryRoom);
+        OutputRooms.Add(ExitRoom);
+        int numEnemyRooms = 0;
+        int desiredEnemyRooms = Math.Min(4, (int)(0.66*tempRooms.Count));
         foreach (Room room in tempRooms)
         {
-            if (room.Type != RoomType.Entrance && room.Type != RoomType.Exit)
+            if (numEnemyRooms < desiredEnemyRooms)
             {
-                room.Type = (RoomType)UnityEngine.Random.Range(2, 5);
+                room.Type = RoomType.Enemy;
+                numEnemyRooms ++;
+            }
+            else
+            {
+                room.Type = (RoomType)UnityEngine.Random.Range(2,5);
+            }
+            OutputRooms.Add(room);
+        }
+        foreach (Room room in OutputRooms)
+        {
+            Debug.Log("Room type:" + room.Type);
+        }
+        Rooms = OutputRooms;
+    }
+
+    private void finishRoomAssignment()
+    {
+        Vector3 startRoomLocation = Vector3.zero;
+        foreach (Room room in Rooms)
+        {
+            Debug.Log("Room type:" + room.Type);
+            Vector3 location = room.Rect.center;
+            EnemyTypeManager enemyTypeManager = GameObject.Find("EnemyTypeManager").GetComponent<EnemyTypeManager>();
+            if (room.Type == RoomType.Entrance)
+            {
+                startRoomLocation = location;
+            }
+            else if (room.Type == RoomType.Exit)
+            {
+                GameObject portal = Instantiate(Portal, location, Quaternion.identity);
+                Debug.Log("Placed portal, location: " + portal.transform.position.ToString());
+                portal.GetComponent<Portal>().isExit = true;
+            }
+            else if (room.Type == RoomType.Enemy)
+            {
+                GameObject spawner = Instantiate(Spawner, location, Quaternion.identity);
+                Spawner spawnerScript = spawner.GetComponent<Spawner>();
+                var PossibleEnemyTypes = CurrentLevel.Instance.Environment.PossibleEnemyTypes.Select(x => x.GetComponent<EnemyType>()).ToList();
+                spawnerScript.PossibleEnemyTypes = PossibleEnemyTypes;
+                spawnerScript.enemyTypeManager = enemyTypeManager;
+                spawnerScript.SpawnEnemy();
+            }
+            else if (room.Type == RoomType.StrongEnemy)
+            {
+                GameObject spawner = Instantiate(Spawner, location, Quaternion.identity);
+                Spawner spawnerScript = spawner.GetComponent<Spawner>();
+                var PossibleEnemyTypes = CurrentLevel.Instance.Environment.PossibleEnemyTypes.Select(x => x.GetComponent<EnemyType>()).ToList();
+                spawnerScript.PossibleEnemyTypes = PossibleEnemyTypes;
+                spawnerScript.enemyTypeManager = enemyTypeManager;
+                spawnerScript.isHardEnemy = true;
+                spawnerScript.SpawnEnemy();
+            }
+            else if (room.Type == RoomType.Loot)
+            {
+                
             }
         }
-        Rooms = tempRooms;
+        Instantiate(Portal, startRoomLocation, Quaternion.identity);
+        Debug.Log("Created portal");
+        Invoke("SpawnPlayer", 0.5f);
     }
+
+    private void SpawnPlayer()
+    {
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        player.GetComponent<SpriteRenderer>().color = new Color(1f, 1f, 1f, 1f);
+        player.transform.position = Vector3.zero;
+        Player playerScript = player.GetComponent<Player>();
+        playerScript.inBattle = false;
+        playerScript.Turn(playerScript.calculateAngleTurned(0));
+        playerScript.Move();
+    }
+
     private ushort[,] generateValueArray(HashSet<Vector2Int> tiles, Rect grid)
     {
         var valueArray = new ushort[(int)grid.width, (int)grid.height];

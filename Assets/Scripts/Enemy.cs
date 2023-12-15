@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class Enemy : Character
@@ -8,41 +10,118 @@ public class Enemy : Character
     [SerializeField]
     private int viewRange;
     [SerializeField]
-    private float attackSpeed;
+    private double attackSpeed;
     [SerializeField]
-    private float blockChance;
+    private float blockChance = (float)Level.GetBlockChance();
     [SerializeField]
-    private float lastAttack = 0;
+    private double lastAttack = 0;
     [SerializeField]
-    private EnemyType type;
+    public EnemyType type;
+    [SerializeField]
+    private bool movementBlocked = false;
+    public bool isHardEnemy = false;
+    public TextMeshProUGUI attackTextBox;
     void Start()
     {
         base.Start();
+        float difficultyMultiplier = (float)Level.GetDifficultyMultiplier();
+        health = health * difficultyMultiplier;
+        maxHealth = health;
+        damage = damage * difficultyMultiplier;
+        blockChance = (float)Level.GetBlockChance();
+        if (isHardEnemy)
+        {
+            makeHardEnemy();
+        }
     }
 
     // Update is called once per frame
     void Update()
     {
+        if (isDead)
+        {
+            return;
+        }
         if (inBattle)
         {
-            if (DateTime.Now.Millisecond - lastAttack >= attackSpeed)
+            if (DateTime.Now.Subtract(new DateTime(1970,1,1,0,0,0)).TotalMilliseconds - lastAttack >= attackSpeed)
             {
-                lastAttack = DateTime.Now.Millisecond;
+                lastAttack = DateTime.Now.Subtract(new DateTime(1970,1,1,0,0,0)).TotalMilliseconds;
                 var attack = type.getAttacks();
                 int enemyAttackIndex = attack.Item1;
                 float quality = attack.Item2;
+                attackTextBox.text = ChordLibrary.GetChordName(enemyAttackIndex);
                 battle.attack(this, new Chord(enemyAttackIndex, quality), damage);
             }
         }
         else
         {
-            var collider = Physics2D.OverlapCircle(transform.position, viewRange, 3); //3 is player layer
-            if (collider)
+            var collider = Physics2D.OverlapCircle(transform.position, viewRange, 8); //3 is player layer, so 8 is player mask (boolean 100 bitmask)
+            if (collider && collider.gameObject.GetComponent<Player>().isDead == false && collider.gameObject.GetComponent<Player>().inBattle == false)
             {
                 inBattle = true;
-                
+                Debug.Log("Enemy entered battle");
+                Player player = collider.gameObject.GetComponent<Player>();
+                battle = new Battle(player, this);
+                player.enterBattle(battle);
+            }
+            else if (!movementBlocked)
+            {
+                float movement = UnityEngine.Random.Range(0f,1f);
+                if (movement < 0.5)
+                {
+                    //stay still
+                }
+                else if (movement < 0.75f)
+                {
+                    Move();
+                }
+                else
+                {
+                    var turn = UnityEngine.Random.Range(0f, 1f);
+                    int newAngle;
+                    if (turn < 0.25)
+                    {
+                        newAngle = 90;
+                    }
+                    else if (turn < 0.5)
+                    {
+                        newAngle = 180;
+                    }
+                    else if (turn < 0.75)
+                    {
+                        newAngle = 270;
+                    }
+                    else
+                    {
+                        newAngle = 0;
+                    }
+                    Turn(calculateAngleTurned(newAngle));
+                }
+                BlockMovement();
             }
         }
+    }
+    public void takeDamage(float damage)
+    {
+        CurrentLevel.Instance.playerDamageDealt += damage;
+        animator.SetTrigger("isHit");
+        health -= damage;
+        healthBar.SetValue(health, maxHealth);
+        if (health <= 0)
+        {
+            Die();
+        }
+    }
+
+    private void ResetMovementBlock()
+    {
+        movementBlocked = false;
+    }
+    private void BlockMovement()
+    {
+        movementBlocked = true;
+        Invoke("ResetMovementBlock", time);
     }
     public float getBlockChance()
     {
@@ -55,5 +134,16 @@ public class Enemy : Character
     public EnemyType getType()
     {
         return type;
+    }
+    public void makeHardEnemy()
+    {
+        Level.levelNumber += 2;
+        blockChance = (float)Level.GetBlockChance();
+        Level.levelNumber -= 2;
+        health *= 1.5f;
+        maxHealth = health;
+        damage *= 1.5f;
+        SpriteRenderer spriteRenderer = GetComponent<SpriteRenderer>();
+        spriteRenderer.color = new Color(1, 0, 1, 1);
     }
 }

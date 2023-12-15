@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class Character : Entity
@@ -8,20 +9,28 @@ public class Character : Entity
     [SerializeField]
     protected float speed = 1f;
     [SerializeField]
+    protected float time = 0.5f;
+    [SerializeField]
     protected float direction = 0;
     [SerializeField]
-    protected float health = 100f;
+    public float health = 100f;
+    [SerializeField]
+    public float maxHealth = 100f;
     [SerializeField]
     protected float damage = 5f;
     [SerializeField]
-    protected bool inBattle = false;
+    public bool inBattle = false;
+    protected bool isFacingLeft = false;
+    public bool isDead = false;
     protected Battle battle;
-    protected CharacterController characterController;
+    protected Rigidbody2D rb;
+    public HealthBar healthBar;
+    public Animator BlockAnimator;
 
     protected override void Start()
     {
         base.Start();
-        characterController = gameObject.AddComponent<CharacterController>();
+        rb = gameObject.GetComponent<Rigidbody2D>();
     }
 
     // Update is called once per frame
@@ -30,63 +39,66 @@ public class Character : Entity
         
     }
 
-    protected void Move()
+    public void Move()
     {
-        Vector3 movement = new Vector3();
-        movement.x += speed * (float)Mathf.Cos(Mathf.Deg2Rad*direction) * Time.deltaTime;
-        movement.y += speed * (float)Mathf.Sin(Mathf.Deg2Rad*direction) * Time.deltaTime;
-        animator.SetTrigger("isMoving");
-        characterController.Move(movement);
-        
+        Vector2 movement = new Vector2(Mathf.Cos(Mathf.Deg2Rad*direction), Mathf.Sin(Mathf.Deg2Rad*direction));
+        animator.SetBool("isMoving", true);
+        rb.velocity = movement * speed/time;
+        Invoke("Stop", time);
     }
 
-    protected void Turn(float angle)
+    public void Block()
     {
-        if (direction == 270 && (angle == -90 || angle == 180))
+        BlockAnimator.SetTrigger("Block");
+    }
+
+    protected void Stop()
+    {
+        rb.velocity = Vector2.zero;
+        animator.SetBool("isMoving", false);
+    }
+
+    protected void TryFlip(bool isLeft)
+    {
+        if (isLeft != isFacingLeft)
         {
-            animator.SetTrigger("Turn");
-            animator.SetBool("isFacingLeft", true);
+            transform.localScale = new Vector3(-transform.localScale.x, transform.localScale.y, transform.localScale.z);
+            isFacingLeft = isLeft;
         }
-        else if (direction == 0 && (angle == 90 || angle == 180))
-        {
-            animator.SetTrigger("Turn");
-            animator.SetBool("isFacingLeft", true);
-        }
-        else if (direction == 90 && (angle == -90 || angle == 180))
-        {
-            animator.SetTrigger("Turn");
-            animator.SetBool("isFacingLeft", false);
-        }
-        else if (direction == 180 && (angle == 90 || angle == 180))
-        {
-            animator.SetTrigger("Turn");
-            animator.SetBool("isFacingLeft", false);
-        }
+    }
+
+    public void Turn(float angle)
+    {
         direction = (direction + angle) % 360;
+        if (direction == 0)
+        {
+            TryFlip(false);
+        }
+        else if (direction == 180)
+        {
+            TryFlip(true);
+        }
     }
 
-    protected int calculateAngleTurned(int newAngle)
+    public int calculateAngleTurned(int newAngle)
     {
         int angleTurned = newAngle - (int)direction;
         return Math.Abs(angleTurned) == 180 ? 180 : angleTurned;
     }
 
-    public virtual void takeDamage(float damage)
-    {
-        health -= damage;
-        if (health <= 0)
-        {
-            Die();
-        }
-    }
-
     protected void Die()
     {
-        animator.SetTrigger("Die");
+        animator.SetTrigger("isDead");
         if (inBattle)
         {
             battle.endBattle(this);
         }
-        Destroy(gameObject, 1f);
+        isDead = true;
+    }
+
+    public virtual void exitBattle()
+    {
+        inBattle = false;
+        battle = null;
     }
 }

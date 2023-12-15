@@ -1,7 +1,8 @@
 using System;
 using UnityEngine;
 using System.Linq;
-
+using System.Collections;
+using UnityEditor;
 public class Battle
 {
     private Player player;
@@ -23,6 +24,8 @@ public class Battle
         this.enemy = enemy;
         enemyBlockChance = enemy.getBlockChance();
         enemyType = enemy.getType();
+        //BattleUIManager.makeBattleScene(CurrentLevel.Environment.Ints, player.gameObject, enemy.gameObject);
+        BattleUIManager.makeBattleScene(new int[]{1}, player.gameObject, enemy.gameObject);
     }
 
     public void attack(Character attacker, Chord attack, float damage)
@@ -43,6 +46,7 @@ public class Battle
             if (incomingAttack && ChordLibrary.IsRelativeMajMin(enemyAttackChordIndex, attack.ChordIndex))
             {
                 Debug.Log("Player blocked enemy attack");
+                player.Block();
                 incomingAttack = false;
                 XPGain += Global.BlockXPGain;
             }
@@ -67,6 +71,7 @@ public class Battle
                 if (UnityEngine.Random.Range(0f, 1f) < enemyBlockChance)
                 {
                     Debug.Log("Enemy blocked player attack");
+                    enemy.Block();
                 }
                 else
                 {
@@ -88,32 +93,43 @@ public class Battle
             }
             Debug.Log($"Enemy attacked with {ChordLibrary.GetChordName(attack.ChordIndex)}");
             enemyAttackChordIndex = attack.ChordIndex;
-            enemyLastAttack = DateTime.Now.Millisecond;
+            enemyLastAttack = (float)DateTime.Now.Subtract(new DateTime(1970, 1, 1, 0, 0, 0)).TotalMilliseconds;
         }
     }
 
     public void endBattle(Character loser)
     {
-        if (loser == enemy)
+        if (loser == (Character)enemy)
         {
             Debug.Log("Player won battle");
             XPGain += enemyType.XP;
             XPGain *= (1 + enemyBlockChance);
             player.LevelUp(XPGain);
             Debug.Log($"Player gained {XPGain} XP");
+            CurrentLevel.Instance.enemiesKilled ++;
             player.exitBattle();
+            player.StartCoroutine(endBattleDelay());
         }
         else
         {
             Debug.Log("Player lost battle");
+            player.exitBattle();
+            enemy.exitBattle();
+            BattleUIManager.closeBattleScene();
             Global.GameOver();
         }
         
     }
 
+    public IEnumerator endBattleDelay(){
+        yield return new WaitForSeconds(2f);
+        UnityEngine.Object.Destroy(enemy.gameObject);
+        BattleUIManager.closeBattleScene(player.gameObject);
+    }
+
     void Update()
     {
-        if (enemyLastAttack != 0f || ((DateTime.Now.Millisecond - enemyLastAttack) > Level.GetBlockTime() && incomingAttack))
+        if (enemyLastAttack != 0f || ((DateTime.Now.Subtract(new DateTime(1970,1,1,0,0,0)).TotalMilliseconds - enemyLastAttack) > Level.GetBlockTime() && incomingAttack))
         {
             incomingAttack = false;
             Debug.Log($"Player took {enemy.getDamage()} damage");
