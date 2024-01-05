@@ -6,6 +6,7 @@ using UnityEngine.Tilemaps;
 
 public class PainterHelper : MonoBehaviour
 {
+    //variables that are assigned in the unity editor
     [SerializeField]
     public List<TileBase> floorTiles;
     [SerializeField]
@@ -41,6 +42,7 @@ public class PainterHelper : MonoBehaviour
     [SerializeField]
     private List<TileBase> objectTiles;
 
+    //Returns a plain floor tile, either plain green grass or optionally actual grass
     private TileBase getPlainTile()
     {
         var randomValue = Random.Range(0, 1f);
@@ -54,6 +56,7 @@ public class PainterHelper : MonoBehaviour
             return floorTiles[1 + Mathf.FloorToInt((randomValue - floorTileChance) / chanceAfter)];
         }
     }
+    //VERY long switch statement to get the correct tile based on the states of the surrounding tiles
     public TileBase GetTile(ushort tileValue)
     {
         if (tileValue >= 256)
@@ -581,6 +584,7 @@ public class PainterHelper : MonoBehaviour
         }
     }
 
+    //Returns a random object tile
     public TileBase GetObjectTile()
     {
         return objectTiles[Random.Range(0, objectTiles.Count)];

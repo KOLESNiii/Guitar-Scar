@@ -23,7 +23,7 @@ public class Character : Entity
     protected bool isFacingLeft = false;
     public bool isDead = false;
     protected Battle battle;
-    protected Rigidbody2D rb;
+    protected Rigidbody2D rb; //rigidbody of character, used for movement
     public HealthBar healthBar;
     public Animator BlockAnimator;
 
@@ -33,31 +33,28 @@ public class Character : Entity
         rb = gameObject.GetComponent<Rigidbody2D>();
     }
 
-    // Update is called once per frame
-    void FixedUpdate()
-    {
-        
-    }
-
     public void Move()
     {
-        Vector2 movement = new Vector2(Mathf.Cos(Mathf.Deg2Rad*direction), Mathf.Sin(Mathf.Deg2Rad*direction));
-        animator.SetBool("isMoving", true);
-        rb.velocity = movement * speed/time;
-        Invoke("Stop", time);
+        Vector2 movement = new Vector2(Mathf.Cos(Mathf.Deg2Rad*direction), Mathf.Sin(Mathf.Deg2Rad*direction)); //calculate movement vector
+        animator.SetBool("isMoving", true); //set animator to moving
+        rb.velocity = movement * speed/time; //set velocity to movement vector
+        Invoke("Stop", time); //stop movement after time, for blocky movement
     }
 
+    //called by battle manager, to make battle scene ui show block animation
     public void Block()
     {
         BlockAnimator.SetTrigger("Block");
     }
 
+    //stops movement and suspends animation
     protected void Stop()
     {
         rb.velocity = Vector2.zero;
         animator.SetBool("isMoving", false);
     }
 
+    //attempts to flip character sprite if new direction is different to original direction
     protected void TryFlip(bool isLeft)
     {
         if (isLeft != isFacingLeft)
@@ -67,6 +64,7 @@ public class Character : Entity
         }
     }
 
+    //takes a float angle as a parameter, and turns the character by that angle
     public void Turn(float angle)
     {
         direction = (direction + angle) % 360;
@@ -80,22 +78,25 @@ public class Character : Entity
         }
     }
 
+    //gets the angle turned, taking the new angle the character should be facing as a parameter
     public int calculateAngleTurned(int newAngle)
     {
         int angleTurned = newAngle - (int)direction;
         return Math.Abs(angleTurned) == 180 ? 180 : angleTurned;
     }
 
+    //functionality for character death
     protected void Die()
     {
-        animator.SetTrigger("isDead");
+        animator.SetTrigger("isDead"); //set animator to dead
         if (inBattle)
         {
-            battle.endBattle(this);
+            battle.endBattle(this); //end battle if character is in battle
         }
-        isDead = true;
+        isDead = true; //blocks behaviours from being called
     }
 
+    //resets the character's fields to not in battle values
     public virtual void exitBattle()
     {
         inBattle = false;

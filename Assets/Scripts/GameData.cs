@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+//Class for holding data about the game, to be saved and loaded
 [System.Serializable]
 public class GameData
 {
@@ -20,7 +21,7 @@ public class GameData
     {
         this.isEndless = isEndless;
         this.numberOfDungeons = numberOfDungeons;
-        if (!isEndless && numberOfDungeons <= 0)
+        if (!isEndless && numberOfDungeons <= 0) //Validation, if the game is not endless, the number of dungeons must be greater than 0
         {
             Debug.LogError("numberOfDungeons must be greater than 0");
         }

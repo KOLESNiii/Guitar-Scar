@@ -180,7 +180,7 @@ Camera:
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 1791
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
@@ -336,7 +336,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8810338099944711689, guid: 2f8f727978c90ba438218e1a347975bf, type: 3}
       propertyPath: m_UiScaleMode
-      value: 0
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8810338099944711689, guid: 2f8f727978c90ba438218e1a347975bf, type: 3}
+      propertyPath: m_ReferenceResolution.x
+      value: 1920
+      objectReference: {fileID: 0}
+    - target: {fileID: 8810338099944711689, guid: 2f8f727978c90ba438218e1a347975bf, type: 3}
+      propertyPath: m_ReferenceResolution.y
+      value: 1080
       objectReference: {fileID: 0}
     - target: {fileID: 8810338099944711691, guid: 2f8f727978c90ba438218e1a347975bf, type: 3}
       propertyPath: m_Name

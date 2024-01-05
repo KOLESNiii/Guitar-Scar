@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+//Base class for all entities
 public class Entity : MonoBehaviour
 {
     protected Animator animator;
@@ -10,11 +11,5 @@ public class Entity : MonoBehaviour
     protected virtual void Start()
     {
         animator = GetComponent<Animator>();
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
     }
 }

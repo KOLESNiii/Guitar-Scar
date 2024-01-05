@@ -3,16 +3,18 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+//Singleton class that stores information about the current dungeon level, quasi-static
 public class CurrentLevel : MonoBehaviour, IDataPersistence
 {
-    public static CurrentLevel Instance
+    public static CurrentLevel Instance //singleton
     {get; private set;}
     public Environment Environment;
-    public int numDungeons = 1;
-    public int currentDungeon = 0;
+    public int numDungeons = 1; //number of dungeons in the current level
+    public int currentDungeon = 0; //current dungeon in the level
     public float playerDamageDealt = 0f;
-    public float playerDamageTaken = 0f;
+    public float playerDamageTaken = 0f; 
     public int enemiesKilled = 0;
+    //Logic for singleton, to ensure that the class is quasi-static
     void Awake()
     {
         if (Instance == null)
@@ -30,6 +32,7 @@ public class CurrentLevel : MonoBehaviour, IDataPersistence
         Environment = environment;
     }
 
+    //Loads next dungeon in level, exits level if last dungeon
     public void NextDungeon()
     {
         currentDungeon++;
@@ -41,13 +44,14 @@ public class CurrentLevel : MonoBehaviour, IDataPersistence
         else
         {
             Level.NextLevel();
-            GameDataManager.Instance.SaveGame();
+            GameDataManager.Instance.SaveGame(); //saves game
             SceneManager.LoadScene("Dungeon", LoadSceneMode.Single);
             GameObject player = GameObject.FindGameObjectWithTag("Player");
-            DontDestroyOnLoad(player);
+            DontDestroyOnLoad(player); //prevents player from being destroyed on scene load
         }
     }
 
+    //loads save file data
     public void LoadData(GameData data)
     {
         numDungeons = data.numberOfDungeons;
@@ -58,6 +62,7 @@ public class CurrentLevel : MonoBehaviour, IDataPersistence
         Level.SetLevel(data.dungeonCount);
     }
 
+    //saves data to save file
     public void SaveData(ref GameData data)
     {
         data.numberOfDungeons = numDungeons;

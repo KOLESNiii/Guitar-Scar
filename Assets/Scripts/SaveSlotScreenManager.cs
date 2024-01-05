@@ -4,8 +4,10 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+//Class for managing the save slot screen
 public class SaveSlotScreenManager : MonoBehaviour
 {
+    //UI elements assigned in unity editor
     [SerializeField]
     GameObject DamageDealtText;
     [SerializeField]
@@ -27,11 +29,13 @@ public class SaveSlotScreenManager : MonoBehaviour
     [SerializeField]
     GameObject SaveSlot3;
     GameData[] saveSlots = new GameData[3];
-    int selectedSaveSlot = -1;
+    int selectedSaveSlot = -1; //Selected save slot, -1 if none selected
+    //Get the save slots from the game data manager
     void Start()
     {
         saveSlots = GameDataManager.Instance.getSaveSlots(true);
     }
+    //Callback functions for save slot toggles, identical apart from selected save slot identity
     public void ToggleSaveSlot1(bool newValue)
     {
         if (SaveSlot1.GetComponent<UnityEngine.UI.Toggle>().isOn)
@@ -59,23 +63,40 @@ public class SaveSlotScreenManager : MonoBehaviour
             UpdateText();
         }
     }
-
+    //Procedure for loading a save slot
     public void Select()
+    {
+        if (selectedSaveSlot == -1) //Validation check
+        {
+            return;
+        }
+        GameDataManager.Instance.setSaveSlot(selectedSaveSlot, true); //Set the save slot in the game data manager
+        GameObject player = Instantiate(PlayerPrefab, Vector3.zero, Quaternion.identity); //Instantiate the player
+        DontDestroyOnLoad(player); //Don't destroy the player when loading a new scene
+        GameDataManager.Instance.LoadGame(); //Load the game data
+        SceneManager.LoadScene("Dungeon", LoadSceneMode.Single); //Load the dungeon scene
+    }
+
+    //Procedure for starting a new game, nearly identical to Select()
+    public void NewGame()
     {
         if (selectedSaveSlot == -1)
         {
             return;
         }
         GameDataManager.Instance.setSaveSlot(selectedSaveSlot, true);
+        GameDataManager.Instance.NewGame(); //Get an empty gameData object
+        GameDataManager.Instance.OverwriteSaveSlot();  //Overwrite the save slot with the empty gameData object
         GameObject player = Instantiate(PlayerPrefab, Vector3.zero, Quaternion.identity);
         DontDestroyOnLoad(player);
         GameDataManager.Instance.LoadGame();
         SceneManager.LoadScene("Dungeon", LoadSceneMode.Single);
     }
 
+    //Updates the text on the save slot screen, giving information about the selected save slot
     public void UpdateText()
     {
-        if (selectedSaveSlot == -1)
+        if (selectedSaveSlot == -1) //If no save slot is selected
         {
             EmptySaveSlotMessage.GetComponent<TMPro.TextMeshProUGUI>().text = "Select a Save Slot";
             DamageDealtText.GetComponent<TMPro.TextMeshProUGUI>().text = "-";
@@ -84,7 +105,7 @@ public class SaveSlotScreenManager : MonoBehaviour
             PlayerLevelText.GetComponent<TMPro.TextMeshProUGUI>().text = "-";
             DungeonsClearedText.GetComponent<TMPro.TextMeshProUGUI>().text = "-";
         }
-        else if (saveSlots[selectedSaveSlot] == null)
+        else if (saveSlots[selectedSaveSlot] == null) //If the selected save slot is empty
         {
             EmptySaveSlotMessage.GetComponent<TMPro.TextMeshProUGUI>().text = "Empty Save Slot";
             DamageDealtText.GetComponent<TMPro.TextMeshProUGUI>().text = "-";
@@ -93,7 +114,7 @@ public class SaveSlotScreenManager : MonoBehaviour
             PlayerLevelText.GetComponent<TMPro.TextMeshProUGUI>().text = "-";
             DungeonsClearedText.GetComponent<TMPro.TextMeshProUGUI>().text = "-";
         }
-        else
+        else //If the selected save slot is not empty
         {
             EmptySaveSlotMessage.GetComponent<TMPro.TextMeshProUGUI>().text = "";
             DamageDealtText.GetComponent<TMPro.TextMeshProUGUI>().text = saveSlots[selectedSaveSlot].damageDealt.ToString();

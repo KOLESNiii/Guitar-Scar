@@ -2,9 +2,10 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
-
+//Manages enemy type data
 public class EnemyTypeManager : MonoBehaviour
 {
+    //variables assigned in unity editor
     public EnemyType cmaj;
     public EnemyType efmaj;
     public EnemyType fmaj;
@@ -23,6 +24,7 @@ public class EnemyTypeManager : MonoBehaviour
     public List<GameObject> dfMajSprites;
     public List<GameObject> gMajSprites;
     public List<GameObject> allSprites;
+    //Returns the enemy type based on the int passed in
     public EnemyType getType(int Int)
     {
         if (Int == 0)
@@ -62,6 +64,7 @@ public class EnemyTypeManager : MonoBehaviour
             return all;
         }
     }
+    //Returns a random enemy sprite based on the enemy type passed in
     public GameObject getEnemy(EnemyType type)
     {
         if (type == cmaj)

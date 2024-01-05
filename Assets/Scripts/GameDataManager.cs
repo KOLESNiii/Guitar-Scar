@@ -6,16 +6,18 @@ using System.Linq;
 using System;
 using System.IO;
 
+//Singleton class to manage the saving and loading of game data
 public class GameDataManager : MonoBehaviour
 {
     public static GameDataManager Instance
     {get; private set;}
     public string fileName;
     private GameData gameData;
-    private List<IDataPersistence> dataPersistenceObjects;
+    private List<IDataPersistence> dataPersistenceObjects; //Objects that handle loading and saving logic
     private FileDataHandler fileDataHandler;
-    int saveSlot = -1;
+    int saveSlot = -1; //The save slot to save to, -1 means no save slot selected
 
+    //Singleton logic
     void Awake()
     {
         if (Instance == null)
@@ -28,6 +30,7 @@ public class GameDataManager : MonoBehaviour
             Debug.LogWarning("GameDataManager already exists in scene!");
         }
     }
+    //Gets the available save slots for a given level or endless mode
     public GameData[] getSaveSlots(bool isEndless,  int levelNumber = 0)
     {
         var output = new GameData[3];
@@ -39,7 +42,7 @@ public class GameDataManager : MonoBehaviour
         {
             fileDataHandler = new FileDataHandler(Path.Combine(new string[]{Application.persistentDataPath, "Saves", "Level", levelNumber.ToString()}), "0");
         }
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < 3; i++) //iterates through the 3 save slots
         {
             fileDataHandler.SetDataFilePath(i.ToString());
             output[i] = fileDataHandler.Load();
@@ -47,11 +50,12 @@ public class GameDataManager : MonoBehaviour
         return output;
     }
 
+    //Sets the save slot to save to and laod from
     public void setSaveSlot(int saveSlot, bool isEndless, int levelNumber = 0)
     {
         this.saveSlot = saveSlot;
         string folderName = "";
-        if (isEndless & levelNumber != 0)
+        if (isEndless & levelNumber != 0) //Validation, endless mode cannot have level numbers
         {
             Debug.LogError("Endless cannot have level numbers");
 
@@ -64,7 +68,7 @@ public class GameDataManager : MonoBehaviour
         {
             folderName = Path.Combine("Level", levelNumber.ToString());
         }
-        if (saveSlot < 0 || saveSlot > 2)
+        if (saveSlot < 0 || saveSlot > 2) //Validation, save slot must be between 0 and 2
         {
             Debug.LogError("Invalid save slot");
         }
@@ -74,56 +78,66 @@ public class GameDataManager : MonoBehaviour
         }
         
     }
+    //Sets default values for the game data manager
     void Start()
     {
         this.dataPersistenceObjects = GetAllDataPersistenceObjects();
         fileDataHandler = new FileDataHandler(Path.Combine(Application.persistentDataPath, "Saves"), fileName);
     }
 
+    //Gets default data
     public void NewGame()
     {
         gameData = new GameData();
     }
 
+    //Loads data from the file
     public void LoadGame()
     {
         dataPersistenceObjects = GetAllDataPersistenceObjects();
-        if (saveSlot == -1)
+        if (saveSlot == -1) //Validation, save slot must be selected
         {
             Debug.LogError("No save slot selected");
             return;
         }
-        gameData = fileDataHandler.Load();
-        if (gameData == null)
+        gameData = fileDataHandler.Load(); //Loads data from file
+        if (gameData == null) //Validation, if no data is loaded due to no save file, reverts to default values
         {
             Debug.LogError("No game data to load, reverting to default values");
             NewGame();
         }
-        foreach (IDataPersistence dataPersistenceObject in dataPersistenceObjects)
+        foreach (IDataPersistence dataPersistenceObject in dataPersistenceObjects) //Loads data into all data persistence objects
         {
             dataPersistenceObject.LoadData(gameData);
         }
     }
 
+    //Saves data to the file
     public void SaveGame()
     {
         dataPersistenceObjects = GetAllDataPersistenceObjects();
-        if (saveSlot == -1)
+        if (saveSlot == -1) //Validation, save slot must be selected
         {
             Debug.LogError("No save slot selected");
             return;
         }
-        foreach (IDataPersistence dataPersistenceObject in dataPersistenceObjects)
+        foreach (IDataPersistence dataPersistenceObject in dataPersistenceObjects) //Saves data from all data persistence objects
         {
             dataPersistenceObject.SaveData(ref gameData);
         }
+        fileDataHandler.Save(gameData); //Saves data to file
+    }
+
+    //Overwrites the save slot with the current data
+    public void OverwriteSaveSlot()
+    {
         fileDataHandler.Save(gameData);
     }
 
+    //Gets all data persistence objects in the scene
     private List<IDataPersistence> GetAllDataPersistenceObjects()
     {
         List<IDataPersistence> dataPersistenceObjects = FindObjectsOfType<MonoBehaviour>().OfType<IDataPersistence>().ToList();
         return dataPersistenceObjects;
     }
-
 }

@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+//Base class for all drops
 public class Drop : Entity
 {
     public enum Types

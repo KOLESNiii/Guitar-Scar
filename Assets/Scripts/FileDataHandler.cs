@@ -4,6 +4,7 @@ using UnityEngine;
 using System;
 using System.IO;
 
+//Class for handling saving and loading data to and from files
 public class FileDataHandler
 {
     private string dataDirPath;
@@ -20,6 +21,7 @@ public class FileDataHandler
         this.dataFilePath = dataFilePath;
     }
 
+    //Loads data from the file
     public GameData Load()
     {
         string fullPath = Path.Combine(dataDirPath, dataFilePath);
@@ -38,7 +40,7 @@ public class FileDataHandler
                 }
                 data = JsonUtility.FromJson<GameData>(DataSerialized);
             }
-            catch (Exception e)
+            catch (Exception e) //If there is an error, log it
             {
                 Debug.LogError("Error loading data from " + fullPath + ": " + e.Message);
             }
@@ -46,6 +48,7 @@ public class FileDataHandler
         return data;
     }
 
+    //Saves data to the file
     public void Save(GameData data)
     {
         string fullPath = Path.Combine(dataDirPath, dataFilePath);
@@ -65,6 +68,5 @@ public class FileDataHandler
         {
             Debug.LogError("Error saving data to " + fullPath + ": " + e.Message);
         }
-
     }
 }
