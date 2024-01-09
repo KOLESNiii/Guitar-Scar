@@ -4,14 +4,16 @@ using UnityEngine;
 
 public class Testing : MonoBehaviour
 {
-    public int[] chordsToTest = new int[] {0, 2, 7, 21, 16, 23};
     void Start()
     {
-        for (int i = 0; i < chordsToTest.Length; i++)
+    }
+    void Update()
+    {
+        var inputs = InputManager.getInputs();
+        foreach (var input in inputs)
         {
-            for (int j = 0; j < chordsToTest.Length; j++)
+            if (input.type == InputManager.Type.Chord)
             {
-                Debug.Log(ChordLibrary.GetChordName(chordsToTest[i]) + " and " + ChordLibrary.GetChordName(chordsToTest[j]) + " are relative major and minor: " + ChordLibrary.IsRelativeMajMin(chordsToTest[i], chordsToTest[j]));
             }
         }
     }

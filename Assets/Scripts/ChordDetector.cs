@@ -6,7 +6,7 @@ using UnityEngine;
 
 public class ChordDetector
 {
-    private double[] chromagram;
+    private double[] chromagram = new double[12];
     private double[] chord = new double[108];
     private double[,] chordProfiles;
     private double bias;
@@ -58,6 +58,7 @@ public class ChordDetector
             chord[j] = calculateChordScore(chromagram, getChordProfile(j), bias, 4);
         }
         chordIndex = minimumIndex(chord);
+        Debug.Log(chordIndex);
         InputManager.AddChordInput(chordIndex);
     }
 
@@ -86,6 +87,12 @@ public class ChordDetector
     private int minimumIndex(double[] array)
     {
         int minIndex = array.Select((value, index) => new {Value = value, Index = index}).OrderBy(item => item.Value).Select(item => item.Index).First();
+        string chordValues = "";
+        for (int i = 0; i < 108; i++)
+        {
+            chordValues += array[i].ToString() + ", ";
+        }
+        Debug.Log(chordValues);
         return minIndex;
     }
 }

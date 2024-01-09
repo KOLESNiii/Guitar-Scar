@@ -175,4 +175,9 @@ public class Chromagram
     {
         return Mathf.FloorToInt((float)value + 0.5f);
     }
+
+    public void setNotReady()
+    {
+        chromaReady = false;
+    }
 }
