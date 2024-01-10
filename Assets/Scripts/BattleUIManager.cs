@@ -73,6 +73,7 @@ public class BattleUIManager : MonoBehaviour
     }
 
     //loads the rest of the battle scene after the battle UI is loaded
+
     public static void loadRestOfBattleScene()
     {
         Debug.Log("Starting assignment");
@@ -86,7 +87,6 @@ public class BattleUIManager : MonoBehaviour
         PlayerBlockAnimator = GameObject.Find("BattleUICanvas/Player/BlockSplash").GetComponent<Animator>();
         BattleUIManager.AssignBars();
     }
-
     //closes the battle scene and restores the player to the dungeon scene
     public static void closeBattleScene(GameObject player)
     {
