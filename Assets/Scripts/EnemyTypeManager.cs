@@ -52,26 +52,41 @@ public class EnemyTypeManager : MonoBehaviour
     //Returns a random enemy sprite based on the enemy type passed in
     public GameObject getEnemy(EnemyType type)
     {
-        switch (type)
+        if (type == cmaj)
         {
-            case cmaj:
-                return cMajSprites[Random.Range(0, cMajSprites.Count)];
-            case efmaj:
-                return efMajSprites[Random.Range(0, efMajSprites.Count)];
-            case fmaj:
-                return fMajSprites[Random.Range(0, fMajSprites.Count)];
-            case dmaj:
-                return dMajSprites[Random.Range(0, dMajSprites.Count)];
-            case amaj:
-                return aMajSprites[Random.Range(0, aMajSprites.Count)];
-            case emaj:
-                return eMajSprites[Random.Range(0, eMajSprites.Count)];
-            case dfmaj:
-                return dfMajSprites[Random.Range(0, dfMajSprites.Count)];
-            case gmaj:
-                return gMajSprites[Random.Range(0, gMajSprites.Count)];
-            default:
-                return allSprites[Random.Range(0, allSprites.Count)];
+            return cMajSprites[Random.Range(0, cMajSprites.Count)];
+        }
+        else if (type == efmaj)
+        {
+            return efMajSprites[Random.Range(0, efMajSprites.Count)];
+        }
+        else if (type == fmaj)
+        {
+            return fMajSprites[Random.Range(0, fMajSprites.Count)];
+        }
+        else if (type == dmaj)
+        {
+            return dMajSprites[Random.Range(0, dMajSprites.Count)];
+        }
+        else if (type == amaj)
+        {
+            return aMajSprites[Random.Range(0, aMajSprites.Count)];
+        }
+        else if (type == emaj)
+        {
+            return eMajSprites[Random.Range(0, eMajSprites.Count)];
+        }
+        else if (type == dfmaj)
+        {
+            return dfMajSprites[Random.Range(0, dfMajSprites.Count)];
+        }
+        else if (type == gmaj)
+        {
+            return gMajSprites[Random.Range(0, gMajSprites.Count)];
+        }
+        else
+        {
+            return allSprites[Random.Range(0, allSprites.Count)];
         }
     }
 }
