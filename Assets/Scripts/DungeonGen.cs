@@ -98,24 +98,14 @@ public class DungeonGen : MonoBehaviour
         triangulator.Triangulate(graph.AppendToGraph); //Triangulates the room centrepoints and adds the edges to the graph
         graph.PerformPrims(); //Performs Prim's algorithm on the graph
         graph.ReintroduceSomeRemovedEdges(); //Reintroduces some edges that were removed by Prim's algorithm
-        var corridors = graph.SpanningTreeEdges.Select(x => (new Vector2Int(x.Points[0].x, x.Points[0].y), new Vector2Int(x.Points[1].x, x.Points[1].y))).ToHashSet();
-        //Converts the edges of the graph to a hashset of tiles
-        var tiles = grid.Tiles;
-        foreach (var corridor in corridors) //Iterates through all corridors to widen them
-        {
-            for (int i = 0; i < WidthCorridors; i++)
-            {
-                int offset = i == 0 ? 0 : i % 2 == 0 ? -((i+1)/2) : (i+1)/2;
-                tiles.UnionWith(lineGenerator(OffsetVector2Int(corridor.Item1, corridor.Item2, offset)));
-            }
-        }
-        var rectAllGrid = getMaxGridSize(tiles); //Gets the maximum grid size
-        rectAllGrid = padGrid(rectAllGrid, 8); //Pads the grid with empty tiles, so edge of world cannot be seen
-        var valueArray = generateValueArray(tiles, rectAllGrid); //Gets tile values to orient the 2.5D tiles
-        tilemapPainter.PaintFloorTiles(valueArray, new Vector2Int((int)rectAllGrid.x, (int)rectAllGrid.y)); //Paints the floor tiles
-        tilemapPainter.PaintObjectTiles(grid.Tiles); //Adds objects to the tilemap
-        setRoomTypes(grid); //Sets the room types
-        finishRoomAssignment(); //Finishes the room assignment
+        grid.generateCorridors(graph); //Generates corridors
+        var rectAllGrid = grid.getMaxGridSize(tiles); //Gets the maximum grid size
+        rectAllGrid = grid.padGrid(rectAllGrid, 8); //Pads the grid with empty tiles, so edge of world cannot be seen
+        var valueArray = generateValueArray(grid.Tiles, rectAllGrid); //Gets tile values to orient the 2.5D tiles
+        //tilemapPainter.PaintFloorTiles(valueArray, new Vector2Int((int)rectAllGrid.x, (int)rectAllGrid.y)); //Paints the floor tiles
+        //tilemapPainter.PaintObjectTiles(grid.Tiles); //Adds objects to the tilemap
+        //setRoomTypes(grid); //Sets the room types
+        //finishRoomAssignment(); //Finishes the room assignment
     }
     //Assigns room types
     private void setRoomTypes(Grid grid)
@@ -250,110 +240,6 @@ public class DungeonGen : MonoBehaviour
         }
         return 0;
     }
-    //Gets the maximum grid size
-    private Rect getMaxGridSize(IEnumerable<Vector2Int> allTiles)
-    {
-        int maxX = allTiles.Select(tile => tile.x).Max();
-        int minX = allTiles.Select(tile => tile.x).Min();
-        int maxY = allTiles.Select(tile => tile.y).Max();
-        int minY = allTiles.Select(tile => tile.y).Min();
-        return new Rect(minX, minY, maxX-minX, maxY-minY);
-    }
-    //Pads the grid with empty tiles
-    private Rect padGrid(Rect grid, int padding)
-    {
-        return new Rect(grid.x - padding, grid.y - padding, grid.width + 2*padding, grid.height + 2*padding);
-    }
-
-    //Offsets a line by a given offset value, vector1 and vector2 are the start and end points of the line
-    private(Vector2Int, Vector2Int) OffsetVector2Int(Vector2Int vector1, Vector2Int vector2, int offset)
-    {
-        if (Vector2.Angle(vector2-vector1, Vector2.right) < 45f) //If the line is horizontal, add offset to y
-        {
-            return (new Vector2Int(vector1.x, vector1.y + offset), new Vector2Int(vector2.x, vector2.y + offset));
-        } //If the line is vertical, add offset to x
-        return (new Vector2Int(vector1.x + offset, vector1.y), new Vector2Int(vector2.x + offset, vector2.y));
-    }
-    //Wrapper for lineGenerator function to accept tuples
-    private IEnumerable<Vector2Int> lineGenerator((Vector2Int ,Vector2Int) vectors)
-    {
-        return lineGenerator(vectors.Item1, vectors.Item2);
-    }
-    //Generator for an enumerable of tiles for a line between two given points, using discrete ray tracing algorithm
-    private IEnumerable<Vector2Int> lineGenerator(Vector2Int point1, Vector2Int point2)
-    {
-        int x0 = point1.x;
-        int x1 = point2.x;
-        int y0 = point1.y;
-        int y1 = point2.y;
-        double tDeltaX; //Amount to move in x per unit t
-        double tDeltaY; //Amount to move in y per unit t
-        double tMaxX; //Amount of t to move before next vertical tile boundary
-        double tMaxY; //Amount of t to move before next horizontal tile boundary
-        var dx = x1 - x0;
-        var dy = y1 - y0;
-        dx = (dx > 0) ? 1 : (dx < 0) ? -1 : 0; //Gets the direction of the line in x and y
-        dy = (dy > 0) ? 1 : (dy < 0) ? -1 : 0;
-        x1 += dx;
-        y1 += dy;
-        if (dx != 0) 
-        {
-            tDeltaX = Math.Min((double)dx/(x1 - x0), double.MaxValue);
-        }
-        else
-        {
-            tDeltaX = double.MaxValue; //If dx is 0, set tDeltaX to be very large
-        }
-        if (dx > 0)
-        {
-            tMaxX = tDeltaX;
-        }
-        else
-        {
-            tMaxX = 0;
-        }
-        if (dy != 0)
-        {
-            tDeltaY = Math.Min((double)dy/(y1 - y0), double.MaxValue);
-        }
-        else
-        {
-            tDeltaY = double.MaxValue;
-        }
-        if (dy > 0)
-        {
-            tMaxY = tDeltaY;
-        }
-        else
-        {
-            tMaxY = 0;
-        }
-        int i = 0;
-        while (true)
-        {
-            yield return new Vector2Int(x0, y0);
-            if (tMaxX < tMaxY) //if closer to vertical boundary, move in x
-            {
-                tMaxX += tDeltaX;
-                x0 += dx;
-            }
-            else //if closer to horizontal boundary, move in y
-            {
-                tMaxY += tDeltaY;
-                y0 += dy;
-            }
-            if (tMaxX > 1 && tMaxY > 1) //if both tMaxX and tMaxY are greater than 1, the line has reached the end
-            {
-                yield break;
-            }
-            i ++;
-            if (i > 10000) //If the line has not reached the end after 10000 iterations, it is likely in an infinite loop, for this implementation
-            {
-                Debug.Log("tDeltaX: " + tDeltaX.ToString() + ", tDeltaY: " + tDeltaY.ToString() + ", tMaxX: " + tMaxX.ToString() + ", tMaxY: " + tMaxY.ToString() + ", x0: " + x0.ToString() + ", y0: " + y0.ToString() + ", dx: " + dx.ToString() + ", dy: " + dy.ToString());
-                throw new Exception("Infinite loop");
-            }
-        }
-    }
 }
 public class Grid
 {
@@ -437,6 +323,123 @@ public class Grid
             output.Add(new Vector2Int((int)room.Rect.center.x, (int)room.Rect.center.y));
         }
         return output;
+    }
+    public void generateCorridors(Graph graph)
+    {
+        var corridors = graph.SpanningTreeEdges.Select(x => (new Vector2Int(x.Points[0].x, x.Points[0].y), new Vector2Int(x.Points[1].x, x.Points[1].y))).ToHashSet();
+        //Converts the edges of the graph to a hashset of tiles
+        foreach (var corridor in corridors) //Iterates through all corridors to widen them
+        {
+            for (int i = 0; i < WidthCorridors; i++)
+            {
+                int offset = i == 0 ? 0 : i % 2 == 0 ? -((i+1)/2) : (i+1)/2;
+                Tiles.UnionWith(lineGenerator(OffsetVector2Int(corridor.Item1, corridor.Item2, offset)));
+            }
+        }
+    }
+    //Wrapper for lineGenerator function to accept tuples
+    private IEnumerable<Vector2Int> lineGenerator((Vector2Int ,Vector2Int) vectors)
+    {
+        return lineGenerator(vectors.Item1, vectors.Item2);
+    }
+    //Generator for an enumerable of tiles for a line between two given points, using discrete ray tracing algorithm
+    private IEnumerable<Vector2Int> lineGenerator(Vector2Int point1, Vector2Int point2)
+    {
+        int x0 = point1.x;
+        int x1 = point2.x;
+        int y0 = point1.y;
+        int y1 = point2.y;
+        double tDeltaX; //Amount to move in x per unit t
+        double tDeltaY; //Amount to move in y per unit t
+        double tMaxX; //Amount of t to move before next vertical tile boundary
+        double tMaxY; //Amount of t to move before next horizontal tile boundary
+        var dx = x1 - x0;
+        var dy = y1 - y0;
+        dx = (dx > 0) ? 1 : (dx < 0) ? -1 : 0; //Gets the direction of the line in x and y
+        dy = (dy > 0) ? 1 : (dy < 0) ? -1 : 0;
+        x1 += dx;
+        y1 += dy;
+        if (dx != 0) 
+        {
+            tDeltaX = Math.Min((double)dx/(x1 - x0), double.MaxValue);
+        }
+        else
+        {
+            tDeltaX = double.MaxValue; //If dx is 0, set tDeltaX to be very large
+        }
+        if (dx > 0)
+        {
+            tMaxX = tDeltaX;
+        }
+        else
+        {
+            tMaxX = 0;
+        }
+        if (dy != 0)
+        {
+            tDeltaY = Math.Min((double)dy/(y1 - y0), double.MaxValue);
+        }
+        else
+        {
+            tDeltaY = double.MaxValue;
+        }
+        if (dy > 0)
+        {
+            tMaxY = tDeltaY;
+        }
+        else
+        {
+            tMaxY = 0;
+        }
+        int i = 0;
+        while (true)
+        {
+            yield return new Vector2Int(x0, y0);
+            if (tMaxX < tMaxY) //if closer to vertical boundary, move in x
+            {
+                tMaxX += tDeltaX;
+                x0 += dx;
+            }
+            else //if closer to horizontal boundary, move in y
+            {
+                tMaxY += tDeltaY;
+                y0 += dy;
+            }
+            if (tMaxX > 1 && tMaxY > 1) //if both tMaxX and tMaxY are greater than 1, the line has reached the end
+            {
+                yield break;
+            }
+            i ++;
+            if (i > 10000) //If the line has not reached the end after 10000 iterations, it is likely in an infinite loop, for this implementation
+            {
+                Debug.Log("tDeltaX: " + tDeltaX.ToString() + ", tDeltaY: " + tDeltaY.ToString() + ", tMaxX: " + tMaxX.ToString() + ", tMaxY: " + tMaxY.ToString() + ", x0: " + x0.ToString() + ", y0: " + y0.ToString() + ", dx: " + dx.ToString() + ", dy: " + dy.ToString());
+                throw new Exception("Infinite loop");
+            }
+        }
+    }
+
+    //Offsets a line by a given offset value, vector1 and vector2 are the start and end points of the line
+    private(Vector2Int, Vector2Int) OffsetVector2Int(Vector2Int vector1, Vector2Int vector2, int offset)
+    {
+        if (Vector2.Angle(vector2-vector1, Vector2.right) < 45f) //If the line is horizontal, add offset to y
+        {
+            return (new Vector2Int(vector1.x, vector1.y + offset), new Vector2Int(vector2.x, vector2.y + offset));
+        } //If the line is vertical, add offset to x
+        return (new Vector2Int(vector1.x + offset, vector1.y), new Vector2Int(vector2.x + offset, vector2.y));
+    }
+    //Gets the maximum grid size
+    public Rect getMaxGridSize()
+    {
+        int maxX = Tiles.Select(tile => tile.x).Max();
+        int minX = Tiles.Select(tile => tile.x).Min();
+        int maxY = Tiles.Select(tile => tile.y).Max();
+        int minY = Tiles.Select(tile => tile.y).Min();
+        return new Rect(minX, minY, maxX-minX, maxY-minY);
+    }
+    //Pads the grid with empty tiles
+    public Rect padGrid(Rect grid, int padding)
+    {
+        return new Rect(grid.x - padding, grid.y - padding, grid.width + 2*padding, grid.height + 2*padding);
     }
 }
 public class Room
@@ -681,10 +684,10 @@ public class Room
         int count = source.Where(x => x == true).Count();
         return count;
     }
-    //Gets a row from a grid
+    //Gets a row from a grid, source.Count
     private List<bool> getRow(List<List<bool>> source, int rowNumber)
     {
-        return Enumerable.Range(0, source.Count).Select(x => source[x][rowNumber]).ToList();
+        return Enumerable.Range(0, Width).Select(x => source[x][rowNumber]).ToList();
     }
     //Makes the room a tight rectangle
     public void makeRectangle(int gap = 2)
