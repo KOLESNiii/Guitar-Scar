@@ -98,8 +98,8 @@ public class DungeonGen : MonoBehaviour
         triangulator.Triangulate(graph.AppendToGraph); //Triangulates the room centrepoints and adds the edges to the graph
         graph.PerformPrims(); //Performs Prim's algorithm on the graph
         graph.ReintroduceSomeRemovedEdges(); //Reintroduces some edges that were removed by Prim's algorithm
-        grid.generateCorridors(graph); //Generates corridors
-        var rectAllGrid = grid.getMaxGridSize(tiles); //Gets the maximum grid size
+        grid.generateCorridors(graph, WidthCorridors); //Generates corridors
+        var rectAllGrid = grid.getMaxGridSize(); //Gets the maximum grid size
         rectAllGrid = grid.padGrid(rectAllGrid, 8); //Pads the grid with empty tiles, so edge of world cannot be seen
         var valueArray = generateValueArray(grid.Tiles, rectAllGrid); //Gets tile values to orient the 2.5D tiles
         //tilemapPainter.PaintFloorTiles(valueArray, new Vector2Int((int)rectAllGrid.x, (int)rectAllGrid.y)); //Paints the floor tiles
@@ -324,7 +324,7 @@ public class Grid
         }
         return output;
     }
-    public void generateCorridors(Graph graph)
+    public void generateCorridors(Graph graph, int WidthCorridors)
     {
         var corridors = graph.SpanningTreeEdges.Select(x => (new Vector2Int(x.Points[0].x, x.Points[0].y), new Vector2Int(x.Points[1].x, x.Points[1].y))).ToHashSet();
         //Converts the edges of the graph to a hashset of tiles
