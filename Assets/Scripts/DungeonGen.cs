@@ -102,10 +102,10 @@ public class DungeonGen : MonoBehaviour
         var rectAllGrid = grid.getMaxGridSize(); //Gets the maximum grid size
         rectAllGrid = grid.padGrid(rectAllGrid, 8); //Pads the grid with empty tiles, so edge of world cannot be seen
         var valueArray = generateValueArray(grid.Tiles, rectAllGrid); //Gets tile values to orient the 2.5D tiles
-        //tilemapPainter.PaintFloorTiles(valueArray, new Vector2Int((int)rectAllGrid.x, (int)rectAllGrid.y)); //Paints the floor tiles
-        //tilemapPainter.PaintObjectTiles(grid.Tiles); //Adds objects to the tilemap
-        //setRoomTypes(grid); //Sets the room types
-        //finishRoomAssignment(); //Finishes the room assignment
+        tilemapPainter.PaintFloorTiles(valueArray, new Vector2Int((int)rectAllGrid.x, (int)rectAllGrid.y)); //Paints the floor tiles
+        tilemapPainter.PaintObjectTiles(grid.Tiles); //Adds objects to the tilemap
+        setRoomTypes(grid); //Sets the room types
+        finishRoomAssignment(); //Finishes the room assignment
     }
     //Assigns room types
     private void setRoomTypes(Grid grid)
@@ -163,7 +163,7 @@ public class DungeonGen : MonoBehaviour
                 Debug.Log("Placed portal, location: " + portal.transform.position.ToString());
                 portal.GetComponent<Portal>().isExit = true;
             }
-            else if (room.Type == RoomType.Enemy && room.Type == RoomType.StrongEnemy) //Places spawner object at enemy room, which spawns enemies
+            else if (room.Type == RoomType.Enemy || room.Type == RoomType.StrongEnemy) //Places spawner object at enemy room, which spawns enemies
             {
                 GameObject spawner = Instantiate(Spawner, location, Quaternion.identity);
                 Spawner spawnerScript = spawner.GetComponent<Spawner>();
