@@ -94,7 +94,7 @@ public class SaveSlotScreenManager : MonoBehaviour
     }
 
     //Updates the text on the save slot screen, giving information about the selected save slot
-    public void UpdateText()
+    public void UpdateText()  
     {
         if (selectedSaveSlot == -1) //If no save slot is selected
         {
