@@ -356,6 +356,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   frameSize: 512
   samplingFrequency: 44100
+  samplesCaptured: 0
 --- !u!4 &952459836
 Transform:
   m_ObjectHideFlags: 0

@@ -2,10 +2,11 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using FftSharp;
+using System;
 
+//Class to calculate chromagram from audio input
 public class Chromagram
 {
-    private List<double> window;
     private double[] buffer;
     private double[] magnitudeSpectrum;
     private double[] chromagram = new double[12];
@@ -28,14 +29,16 @@ public class Chromagram
         this.samplingFrequency = samplingFrequency;
         referenceFrequency = 130.81278265;
         bufferSize = 8192;
-        numHarmonics = 2;
-        numOctaves = 2;
+        numHarmonics = 3;
+        numOctaves = 3;
         numBinsToSearch = 2;
+        //Initialises base note frequencies
         for (int i = 0; i < 12; i++)
         {
             noteFrequencies[i] = referenceFrequency * Mathf.Pow(2f,((float) i) / 12);
         }
         buffer = new double[bufferSize];
+        //Initialises chromagram to 0
         for (int i = 0; i < 12; i++)
         {
             chromagram[i] = 0.0;
@@ -44,15 +47,17 @@ public class Chromagram
         setSamplingFrequency(this.samplingFrequency);
         setInputAudioFrameSize(this.inputAudioFrameSize);
         numSamplesSinceLastCalculation = 0;
-        chromaCalculationInterval = 4096;
+        chromaCalculationInterval = 2048;
         chromaReady = false;
     }
 
+    //Processes audio frame and calculates chromagram if enough samples have been processed
     public void processAudioFrame(double[] inputAudioFrame)
     {
         chromaReady = false;
         downSampleFrame(inputAudioFrame);
-        for (int i = 0; i < bufferSize - downsampledInputAudioFrameSize; i++)
+        //rolling window buffer
+        for (int i = 0; i < bufferSize - downsampledInputAudioFrameSize; i++) 
         {
             buffer[i] = buffer[i + downsampledInputAudioFrameSize];
         }
@@ -62,6 +67,7 @@ public class Chromagram
             buffer[i] = downsampledInputAudioFrame[n];
             n++;
         }
+        //logic for slowing down chromagram calculation
         numSamplesSinceLastCalculation += inputAudioFrameSize;
         if (numSamplesSinceLastCalculation >= chromaCalculationInterval)
         {
@@ -89,6 +95,7 @@ public class Chromagram
 
     public double[] getChromagram()
     {
+        setNotReady();
         return chromagram;
     }
 
@@ -96,30 +103,32 @@ public class Chromagram
     {
         return chromaReady;
     }
+    //Calculates chromagram from magnitude spectrum
     private void calculateChromagram()
     {
         calculateMagnitudeSpectrum();
-        double divisorRatio = (samplingFrequency / 4.0) / bufferSize;
+        double divisorRatio = (double)samplingFrequency / 4.0 / bufferSize;
         for (int n = 0; n < 12; n++)
         {
             double chromaSum = 0.0;
+            //Calculates chroma for each note by iterating through octaves and harmonics
             for (int octave = 1; octave <= numOctaves; octave++)
             {
                 double noteSum = 0.0;
                 for (int harmonic = 1; harmonic <= numHarmonics; harmonic++)
                 {
-                    int centreBin = round(noteFrequencies[n] * octave * harmonic / divisorRatio);
-                    int minBin = centreBin - numBinsToSearch * harmonic;
+                    int centreBin = round(noteFrequencies[n] * octave * harmonic / divisorRatio); //central bin for note
+                    int minBin = centreBin - numBinsToSearch * harmonic; //minimum and maximum bins to search for note
                     int maxBin = centreBin + numBinsToSearch * harmonic;
                     double maxValue = 0.0;
-                    for (int k = minBin; k <= maxBin; k++)
+                    for (int k = minBin; k <= maxBin; k++) //gets all magnitudes at and near note
                     {
                         if (magnitudeSpectrum[k] > maxValue)
                         {
                             maxValue = magnitudeSpectrum[k];
                         }
                     }
-                    noteSum += maxValue / harmonic;
+                    noteSum += maxValue / harmonic; //sums magnitudes
                 }
                 chromaSum += noteSum;
             }
@@ -127,18 +136,21 @@ public class Chromagram
         }
         chromaReady = true;
     }
-
+    //Calculates magnitude spectrum from buffer, using FFT
     private void calculateMagnitudeSpectrum()
     {
         var window = new FftSharp.Windows.Hamming();
         var input = window.Apply(buffer);
         var output = FftSharp.FFT.Forward(input);
+        var tempOutput = FftSharp.FFT.Magnitude(output);
+        magnitudeSpectrum = new double[bufferSize / 2 + 1];
         for (int i = 0; i < bufferSize / 2 + 1; i++)
         {
-            magnitudeSpectrum[i] = Mathf.Sqrt((float)output[i].Magnitude);
+            magnitudeSpectrum[i] =Mathf.Sqrt((float)tempOutput[i]);
         }
-    }
 
+    }
+    //Downsamples audio frame to 1/4 of original size
     private void downSampleFrame(double[] inputAudioFrame)
     {
         double[] filteredFrame = new double[inputAudioFrameSize];

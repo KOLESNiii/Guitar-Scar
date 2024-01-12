@@ -24,7 +24,7 @@ public class ChordDetector
         }
         classifyChromagram();
     }
-    
+    //Classifies chromagram into chord, by getting the chord profile with the lowest delta value
     private void classifyChromagram()
     {
         int i, j, fifth, chordIndex;
@@ -58,10 +58,10 @@ public class ChordDetector
             chord[j] = calculateChordScore(chromagram, getChordProfile(j), bias, 4);
         }
         chordIndex = minimumIndex(chord);
-        Debug.Log(chordIndex);
-        InputManager.AddChordInput(chordIndex);
+        InputManager.AddChordInput(chordIndex); //add chord to input manager
     }
 
+    //Calculates the delta value for the given chord profile
     private double calculateChordScore(double[] chroma, double[] chordProfile, double biasToUse, int N)
     {
         double sum = 0;
@@ -74,6 +74,7 @@ public class ChordDetector
         return delta;
     }
 
+    //Gets the chord profile for the given index of chord
     private double[] getChordProfile(int index)
     {
         double[] profile = new double[12];
@@ -87,12 +88,6 @@ public class ChordDetector
     private int minimumIndex(double[] array)
     {
         int minIndex = array.Select((value, index) => new {Value = value, Index = index}).OrderBy(item => item.Value).Select(item => item.Index).First();
-        string chordValues = "";
-        for (int i = 0; i < 108; i++)
-        {
-            chordValues += array[i].ToString() + ", ";
-        }
-        Debug.Log(chordValues);
         return minIndex;
     }
 }
