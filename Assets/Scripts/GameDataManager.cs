@@ -134,6 +134,30 @@ public class GameDataManager : MonoBehaviour
         fileDataHandler.Save(gameData);
     }
 
+    public void setHighScore(int score)
+    {
+        GameData highScoreData = new GameData(); //Creates new game data object
+        highScoreData.highScore = score;
+        FileDataHandler HighscoreFileDataHandler = new FileDataHandler(Path.Combine(Application.persistentDataPath), "HighScore");
+        HighscoreFileDataHandler.Save(highScoreData);
+    }
+
+    public int getHighScore()
+    {
+        FileDataHandler HighscoreFileDataHandler = new FileDataHandler(Path.Combine(Application.persistentDataPath), "HighScore");
+        GameData highScoreData = HighscoreFileDataHandler.Load(); //Loads high score data
+        try
+        {
+            int highScore = highScoreData.highScore;
+            return highScore;
+        }
+        catch (NullReferenceException e) //Validation, if no high score data is found, returns 0
+        {
+            Debug.LogWarning("No high score data found");
+            return 0;
+        };
+    }
+
     //Gets all data persistence objects in the scene
     private List<IDataPersistence> GetAllDataPersistenceObjects()
     {

@@ -20,8 +20,10 @@ public static class Global
     public static float PlayerViewRange = 10f;
     public static bool Paused = false;
     //Pauses game logic and animations, loads pause menu
+    public static int colourblindMode = 0;
     public static void Pause()
     {
+        MenuMusicManager.instance.PlayPause();
         Paused = true;
         Time.timeScale = 0;
         SceneManager.LoadScene("PauseMenu", LoadSceneMode.Additive);
@@ -29,14 +31,25 @@ public static class Global
     //Loads game over screen
     public static void GameOver()
     {
+        MenuMusicManager.instance.PlayMenuMusic();
         SceneManager.LoadScene("GameOver", LoadSceneMode.Additive);
     }
     //Logic to exit level, not used as there is only endless mode
     public static void ExitLevel()
     {
+        MenuMusicManager.instance.PlayMenuMusic();
         GameDataManager.Instance.SaveGame();
         Debug.Log("Level Complete");
         SceneManager.UnloadSceneAsync(SceneManager.GetActiveScene());
+    }
+
+    public static void UpdateHighScore(int score)
+    {
+        if (score > GameDataManager.Instance.getHighScore())
+        {
+            Debug.Log(score);
+            GameDataManager.Instance.setHighScore(score);
+        }
     }
 
 }
@@ -71,7 +84,7 @@ public static class Level
     //Returns the chance to block an attack by enemy
     public static double GetBlockChance()
     {
-        double blockChance = -Math.Pow(Math.E, (double)-levelNumber / 20);
+        double blockChance = -Math.Pow(Math.E, (double)-levelNumber / 50);
         blockChance *= 0.9;
         blockChance += 1;
         return blockChance;
@@ -80,7 +93,7 @@ public static class Level
     //Returns the time the player has to block an attack
     public static double GetBlockTime()
     {
-        return BaseBlockTime / Math.Pow(difficultyMultiplier, 0.8);
+        return BaseBlockTime / Math.Pow(difficultyMultiplier, 0.3);
     }
 }
 

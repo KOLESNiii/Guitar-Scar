@@ -47,52 +47,92 @@ public static class InputManager
         if (UnityEngine.Input.GetKeyDown(KeyCode.A))
         {
             Debug.Log("Player input C major");
-            inputs.Add(new Input(Type.Chord, chord: new Chord(0, 1.0f)));
+            AddChordInput(0);
         }
         if (UnityEngine.Input.GetKeyDown(KeyCode.S))
         {
             Debug.Log("Player input C# major");
-            inputs.Add(new Input(Type.Chord, chord: new Chord(1, 1.0f)));
+            AddChordInput(1);
         }
         if (UnityEngine.Input.GetKeyDown(KeyCode.D))
         {
             Debug.Log("Player input D major");
-            inputs.Add(new Input(Type.Chord, chord: new Chord(2, 1.0f)));
+            AddChordInput(2);
         }
         if (UnityEngine.Input.GetKeyDown(KeyCode.F))
         {
             Debug.Log("Player input D# major");
-            inputs.Add(new Input(Type.Chord, chord: new Chord(3, 1.0f)));
+            AddChordInput(3);
         }
         if (UnityEngine.Input.GetKeyDown(KeyCode.G))
         {
             Debug.Log("Player input E major");
-            inputs.Add(new Input(Type.Chord, chord: new Chord(4, 1.0f)));
+            AddChordInput(4);
         }
         if (UnityEngine.Input.GetKeyDown(KeyCode.H))
         {
             Debug.Log("Player input F major");
-            inputs.Add(new Input(Type.Chord, chord: new Chord(5, 1.0f)));
+            AddChordInput(5);
         }
         if (UnityEngine.Input.GetKeyDown(KeyCode.J))
         {
             Debug.Log("Player input F# major");
-            inputs.Add(new Input(Type.Chord, chord: new Chord(6, 1.0f)));
+            AddChordInput(6);
         }
         if (UnityEngine.Input.GetKeyDown(KeyCode.K))
         {
             Debug.Log("Player input G major");
-            inputs.Add(new Input(Type.Chord, chord: new Chord(7, 1.0f)));
+            AddChordInput(7);
         }
         if (UnityEngine.Input.GetKeyDown(KeyCode.L))
         {
             Debug.Log("Player input G# major");
-            inputs.Add(new Input(Type.Chord, chord: new Chord(8, 1.0f)));
+            AddChordInput(8);
+        }
+        if (UnityEngine.Input.GetKeyDown(KeyCode.Z))
+        {
+            Debug.Log("Player input A major");
+            AddChordInput(9);
+        }
+        if (UnityEngine.Input.GetKeyDown(KeyCode.X))
+        {
+            Debug.Log("Player input A# major");
+            AddChordInput(10);
+        }
+        if (UnityEngine.Input.GetKeyDown(KeyCode.C))
+        {
+            Debug.Log("Player input B major");
+            AddChordInput(11);
+        }
+        if (UnityEngine.Input.GetKeyDown(KeyCode.W))
+        {
+            Debug.Log("Player input C minor");
+            AddChordInput(12);
+        }
+        if (UnityEngine.Input.GetKeyDown(KeyCode.V))
+        {
+            Debug.Log("Player input C# minor");
+            AddChordInput(13);
+        }
+        if (UnityEngine.Input.GetKeyDown(KeyCode.B))
+        {
+            Debug.Log("Player input D minor");
+            AddChordInput(14);
+        }
+        if (UnityEngine.Input.GetKeyDown(KeyCode.N))
+        {
+            Debug.Log("Player input D# minor");
+            AddChordInput(15);
+        }
+        if (UnityEngine.Input.GetKeyDown(KeyCode.M))
+        {
+            Debug.Log("Player input E minor");
+            AddChordInput(16);
         }
         if (UnityEngine.Input.GetKeyDown(KeyCode.Q))
         {
             Debug.Log("Player input A minor");
-            inputs.Add(new Input(Type.Chord, chord: new Chord(21, 1.0f)));
+            AddChordInput(21);
         }
         if (UnityEngine.Input.GetKeyDown(KeyCode.Escape))
         {
@@ -109,6 +149,7 @@ public static class InputManager
         double quality;
         int index;
         (quality, index) = ChordLibrary.GetChord_Multiplier(chordIndex);
+        Debug.Log("Processed chord is " + ChordLibrary.GetChordName(index) + " with quality " + quality);
         inputs.Add(new Input(Type.Chord, chord: new Chord(index, (float)quality)));
     }
 }

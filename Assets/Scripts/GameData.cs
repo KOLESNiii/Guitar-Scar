@@ -15,6 +15,8 @@ public class GameData
     public int dungeonCount = 0;
     public int numberOfDungeons = -1;
     public bool isEndless = true;
+    public int timeTaken = 0;
+    public int highScore = 0;
     public List<int> unlockedLevels = new List<int>(){0};
 
     public GameData(bool isEndless = true, int numberOfDungeons = -1)

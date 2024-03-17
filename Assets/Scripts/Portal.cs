@@ -16,6 +16,7 @@ public class Portal : MonoBehaviour
         animator = gameObject.GetComponent<Animator>(); //Gets own animator
         if (!isExit) //If the portal is an entrance, it will collapse a set duration after spawning
         {
+            GetComponent<AudioSource>().PlayOneShot(MenuMusicManager.instance.teleport);
             Invoke("Collapse", aliveTime);
         }
     }
@@ -39,6 +40,7 @@ public class Portal : MonoBehaviour
     {
         if (isExit)
         {
+            GetComponent<AudioSource>().PlayOneShot(MenuMusicManager.instance.teleport);
             Debug.Log("Portal Triggered");
             GameObject player = GameObject.FindGameObjectWithTag("Player");
             player.GetComponent<SpriteRenderer>().color = new Color(1f, 1f, 1f, 0f); //Makes player invisible, as if player has entered portal

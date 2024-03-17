@@ -480,6 +480,18 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1064474603}
         m_TargetAssemblyTypeName: ButtonInputController, Assembly-CSharp
+        m_MethodName: click
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+      - m_Target: {fileID: 1064474603}
+        m_TargetAssemblyTypeName: ButtonInputController, Assembly-CSharp
         m_MethodName: Quit
         m_Mode: 1
         m_Arguments:
@@ -693,7 +705,31 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1064474603}
         m_TargetAssemblyTypeName: ButtonInputController, Assembly-CSharp
+        m_MethodName: click
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+      - m_Target: {fileID: 1064474603}
+        m_TargetAssemblyTypeName: ButtonInputController, Assembly-CSharp
         m_MethodName: ClosePauseMenu
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+      - m_Target: {fileID: 1064474603}
+        m_TargetAssemblyTypeName: ButtonInputController, Assembly-CSharp
+        m_MethodName: StartMenuMusic
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -1320,6 +1356,18 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1064474603}
         m_TargetAssemblyTypeName: ButtonInputController, Assembly-CSharp
+        m_MethodName: click
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+      - m_Target: {fileID: 1064474603}
+        m_TargetAssemblyTypeName: ButtonInputController, Assembly-CSharp
         m_MethodName: ClosePauseMenu
         m_Mode: 1
         m_Arguments:
@@ -1368,6 +1416,87 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1004563381}
   m_CullTransparentMesh: 1
+--- !u!1001 &1016340173
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 7293809566705759628, guid: b2dabaf293c007f44b16a3da0a1945a7, type: 3}
+      propertyPath: text.Array.size
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7293809566705759628, guid: b2dabaf293c007f44b16a3da0a1945a7, type: 3}
+      propertyPath: text.Array.data[0]
+      value: 
+      objectReference: {fileID: 463876429}
+    - target: {fileID: 7293809566705759628, guid: b2dabaf293c007f44b16a3da0a1945a7, type: 3}
+      propertyPath: text.Array.data[1]
+      value: 
+      objectReference: {fileID: 1846499409}
+    - target: {fileID: 7293809566705759628, guid: b2dabaf293c007f44b16a3da0a1945a7, type: 3}
+      propertyPath: text.Array.data[2]
+      value: 
+      objectReference: {fileID: 27279483}
+    - target: {fileID: 7293809566705759628, guid: b2dabaf293c007f44b16a3da0a1945a7, type: 3}
+      propertyPath: text.Array.data[3]
+      value: 
+      objectReference: {fileID: 1710906367}
+    - target: {fileID: 7293809566705759628, guid: b2dabaf293c007f44b16a3da0a1945a7, type: 3}
+      propertyPath: text.Array.data[4]
+      value: 
+      objectReference: {fileID: 470343653}
+    - target: {fileID: 7293809566705759629, guid: b2dabaf293c007f44b16a3da0a1945a7, type: 3}
+      propertyPath: m_RootOrder
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7293809566705759629, guid: b2dabaf293c007f44b16a3da0a1945a7, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -2.434467
+      objectReference: {fileID: 0}
+    - target: {fileID: 7293809566705759629, guid: b2dabaf293c007f44b16a3da0a1945a7, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.4983055
+      objectReference: {fileID: 0}
+    - target: {fileID: 7293809566705759629, guid: b2dabaf293c007f44b16a3da0a1945a7, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 209.32916
+      objectReference: {fileID: 0}
+    - target: {fileID: 7293809566705759629, guid: b2dabaf293c007f44b16a3da0a1945a7, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7293809566705759629, guid: b2dabaf293c007f44b16a3da0a1945a7, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7293809566705759629, guid: b2dabaf293c007f44b16a3da0a1945a7, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7293809566705759629, guid: b2dabaf293c007f44b16a3da0a1945a7, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7293809566705759629, guid: b2dabaf293c007f44b16a3da0a1945a7, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7293809566705759629, guid: b2dabaf293c007f44b16a3da0a1945a7, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7293809566705759629, guid: b2dabaf293c007f44b16a3da0a1945a7, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7293809566705759631, guid: b2dabaf293c007f44b16a3da0a1945a7, type: 3}
+      propertyPath: m_Name
+      value: ColourBlindManager
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: b2dabaf293c007f44b16a3da0a1945a7, type: 3}
 --- !u!1 &1064474602
 GameObject:
   m_ObjectHideFlags: 0
@@ -1498,6 +1627,18 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
+      - m_Target: {fileID: 1064474603}
+        m_TargetAssemblyTypeName: ButtonInputController, Assembly-CSharp
+        m_MethodName: click
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
       - m_Target: {fileID: 1064474603}
         m_TargetAssemblyTypeName: ButtonInputController, Assembly-CSharp
         m_MethodName: ClosePauseMenu

@@ -27,6 +27,7 @@ public class Chromagram
     {
         inputAudioFrameSize = frameSize;
         this.samplingFrequency = samplingFrequency;
+        //Defaut values for chromagram calculation, as per research paper
         referenceFrequency = 130.81278265;
         bufferSize = 8192;
         numHarmonics = 3;
@@ -139,12 +140,12 @@ public class Chromagram
     //Calculates magnitude spectrum from buffer, using FFT
     private void calculateMagnitudeSpectrum()
     {
-        var window = new FftSharp.Windows.Hamming();
+        var window = new FftSharp.Windows.Hamming(); //window function
         var input = window.Apply(buffer);
-        var output = FftSharp.FFT.Forward(input);
-        var tempOutput = FftSharp.FFT.Magnitude(output);
+        var output = FftSharp.FFT.Forward(input); //FFT calculation
+        var tempOutput = FftSharp.FFT.Magnitude(output); //gets magnitude spectrum
         magnitudeSpectrum = new double[bufferSize / 2 + 1];
-        for (int i = 0; i < bufferSize / 2 + 1; i++)
+        for (int i = 0; i < bufferSize / 2 + 1; i++) //Normalisation
         {
             magnitudeSpectrum[i] =Mathf.Sqrt((float)tempOutput[i]);
         }

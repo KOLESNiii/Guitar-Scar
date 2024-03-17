@@ -67,6 +67,7 @@ public class Enemy : Character
             var collider = Physics2D.OverlapCircle(transform.position, viewRange, 8); //3 is player layer, so 8 is player mask (boolean 100 bitmask)
             if (collider && collider.gameObject.GetComponent<Player>().isDead == false && collider.gameObject.GetComponent<Player>().inBattle == false)
             { //Initiates battle if player is in range
+                GetComponent<AudioSource>().PlayOneShot(MenuMusicManager.instance.encounter);
                 inBattle = true;
                 Debug.Log("Enemy entered battle");
                 Player player = collider.gameObject.GetComponent<Player>();
@@ -113,6 +114,7 @@ public class Enemy : Character
     //Logic to take damage from an attack
     public void takeDamage(float damage)
     {
+        GetComponent<AudioSource>().PlayOneShot(MenuMusicManager.instance.hit);
         CurrentLevel.Instance.playerDamageDealt += damage;
         animator.SetTrigger("isHit");
         health -= damage;
@@ -154,7 +156,5 @@ public class Enemy : Character
         health *= 1.5f;
         maxHealth = health;
         damage *= 1.5f;
-        SpriteRenderer spriteRenderer = GetComponent<SpriteRenderer>();
-        spriteRenderer.color = new Color(1, 0, 1, 1); //Makes the enemy purple to indicate it is harder
     }
 }

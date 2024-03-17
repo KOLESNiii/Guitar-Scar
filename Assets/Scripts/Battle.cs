@@ -31,6 +31,7 @@ public class Battle
     //Attack method takes an attacker, an attack, and a damage value as parameters
     public void attack(Character attacker, Chord attack, float damage)
     {
+        attacker.gameObject.GetComponent<AudioSource>().PlayOneShot(MenuMusicManager.instance.attack); //play attack sound
         damage *= attack.Quality; //multiply damage by attack quality, only relevant for player
         if (attacker == player) //specific behaviour for player attack
         {
@@ -103,6 +104,7 @@ public class Battle
     {
         if (loser == (Character)enemy) //if player wins battle
         {
+            MenuMusicManager.instance.PlayWin();
             Debug.Log("Player won battle");
             XPGain += enemyType.XP; //add enemy XP to XP gain
             XPGain *= (1 + enemyBlockChance); //increase XP gain by enemy block chance

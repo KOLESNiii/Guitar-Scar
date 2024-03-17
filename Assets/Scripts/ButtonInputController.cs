@@ -9,6 +9,10 @@ public class ButtonInputController : MonoBehaviour
     [SerializeField]
     private GameObject playerPrefab;
     //Takes the player to game mode selection scene
+    public void click()
+    {
+        MenuMusicManager.instance.PlayClick();
+    }
     public void GameModeSelection()
     {
         SceneManager.LoadScene("EndlessVsLevelsSelection", LoadSceneMode.Single);
@@ -16,11 +20,21 @@ public class ButtonInputController : MonoBehaviour
     //Takes the player to the main menu
     public void MainMenu()
     {
+        GameObject playerToDestroy = GameObject.FindGameObjectWithTag("Player");
+        if (playerToDestroy != null) //destroys player if player exists
+        {
+            Destroy(playerToDestroy);
+        }
         SceneManager.LoadScene("Menu", LoadSceneMode.Single);
+    }
+    public void OpenHelpScreen()
+    {
+        SceneManager.LoadScene("Help", LoadSceneMode.Single);
     }
     //Takes the player to the level selection scene
     public void LevelSelection()
     {
+        MenuMusicManager.instance.PlayDenied();
         SceneManager.LoadScene("LevelSelection", LoadSceneMode.Single);
     }
     //Takes the player to the endless mode save selection scene
@@ -31,6 +45,7 @@ public class ButtonInputController : MonoBehaviour
     //Takes the player to the training mode scene
     public void TrainingMode()
     {
+        MenuMusicManager.instance.PlayDenied();
         SceneManager.LoadScene("TrainingMode", LoadSceneMode.Single);
     }
     //Takes the player to the settings scene
@@ -42,6 +57,7 @@ public class ButtonInputController : MonoBehaviour
     public void Quit()
     {
         Debug.Log("Exiting...");
+        MenuMusicManager.instance.PlayExit();
         Application.Quit();
     }
     //Reloads the latest save file
@@ -61,8 +77,13 @@ public class ButtonInputController : MonoBehaviour
     //Closes pause menu and resumes game
     public void ClosePauseMenu()
     {
+        MenuMusicManager.instance.PlayUnpause();
         SceneManager.UnloadSceneAsync("PauseMenu");
         Global.Paused = false;
         Time.timeScale = 1;
+    }
+    public void StartMenuMusic()
+    {
+        MenuMusicManager.instance.PlayMenuMusic();
     }
 }

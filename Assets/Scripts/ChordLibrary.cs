@@ -108,6 +108,7 @@ public static class ChordLibrary
     {
         if (chordsInGame.Contains(index)) //if chord is in game
         {
+            Debug.Log("Chord is in the game");
             return (1.0, index);
         }
         else //if chord is not in game
@@ -136,7 +137,7 @@ public static class ChordLibrary
         {
             return 0.0;
         }
-        return 0.06 * Math.Pow(difference, 2) - 0.48 * difference + 1.0;
+        return (double)0.06 * Math.Pow(difference, 2) - 0.48 * difference + 1.0;
     }
 
     public static double[,] GetChordProfiles()

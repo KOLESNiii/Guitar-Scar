@@ -34,6 +34,7 @@ public class Player : Character, IDataPersistence
     protected override void Start()
     {
         base.Start();
+        ChordLibrary.GenerateChordLibrary();
     }
 
     // Update is called once per frame
@@ -94,6 +95,7 @@ public class Player : Character, IDataPersistence
     //Takes damage from battle
     public void takeDamage(float damage)
     {
+        GetComponent<AudioSource>().PlayOneShot(MenuMusicManager.instance.hit); //Play hit sound
         CurrentLevel.Instance.playerDamageTaken += damage;
         animator.SetTrigger("isHit"); //Play hit animation
         if (armour > 0)
@@ -152,7 +154,6 @@ public class Player : Character, IDataPersistence
         this.battle = null;
         inBattle = false;
         armour = Math.Max(maxArmour, tempMaxArmour);
-        // TODO: Autosave
     }
     //Exits dungeon, which heals the player to max health and regenerates armour to max armour
     public void exitDungeon()
@@ -213,6 +214,7 @@ public class Player : Character, IDataPersistence
         XP += XPGain;
         if (XP >= XPToNextLevel)
         {
+            MenuMusicManager.instance.PlayLevelUp();
             level++;
             XP -= XPToNextLevel;
             damage *= Global.LevelUpMultiplier; //Stats increases

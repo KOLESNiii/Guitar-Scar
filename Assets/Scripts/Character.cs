@@ -35,15 +35,22 @@ public class Character : Entity
 
     public void Move()
     {
+        stepSound();
+        Invoke("stepSound", time/2);
         Vector2 movement = new Vector2(Mathf.Cos(Mathf.Deg2Rad*direction), Mathf.Sin(Mathf.Deg2Rad*direction)); //calculate movement vector
         animator.SetBool("isMoving", true); //set animator to moving
         rb.velocity = movement * speed/time; //set velocity to movement vector
         Invoke("Stop", time); //stop movement after time, for blocky movement
     }
+    private void stepSound()
+    {
+        GetComponent<AudioSource>().PlayOneShot(MenuMusicManager.instance.step);
+    }
 
     //called by battle manager, to make battle scene ui show block animation
     public void Block()
     {
+        GetComponent<AudioSource>().PlayOneShot(MenuMusicManager.instance.block);
         BlockAnimator.SetTrigger("Block");
     }
 
@@ -88,6 +95,7 @@ public class Character : Entity
     //functionality for character death
     protected void Die()
     {
+        GetComponent<AudioSource>().PlayOneShot(MenuMusicManager.instance.death);
         animator.SetTrigger("isDead"); //set animator to dead
         if (inBattle)
         {

@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -14,6 +15,8 @@ public class CurrentLevel : MonoBehaviour, IDataPersistence
     public float playerDamageDealt = 0f;
     public float playerDamageTaken = 0f; 
     public int enemiesKilled = 0;
+    public int timeTaken = 0;
+    public DateTime startTime;
     //Logic for singleton, to ensure that the class is quasi-static
     void Awake()
     {
@@ -51,6 +54,14 @@ public class CurrentLevel : MonoBehaviour, IDataPersistence
         }
     }
 
+    public int CalculateScore()
+    {
+        float damageRatio = playerDamageDealt / playerDamageTaken;
+        double levelNumberScaled = Math.Pow(currentDungeon, 1.5f);
+        double timeTakenScaled = Math.Sqrt(timeTaken);
+        return (int)(1000 * damageRatio * levelNumberScaled * timeTakenScaled);
+    }
+
     //loads save file data
     public void LoadData(GameData data)
     {
@@ -59,16 +70,24 @@ public class CurrentLevel : MonoBehaviour, IDataPersistence
         playerDamageDealt = data.damageDealt;
         playerDamageTaken = data.damageTaken;
         enemiesKilled = data.enemiesKilled;
+        timeTaken = data.timeTaken;
         Level.SetLevel(data.dungeonCount);
+        startTime = DateTime.Now;
     }
 
     //saves data to save file
     public void SaveData(ref GameData data)
     {
+        timeTaken += DateTime.Now.Subtract(startTime).Seconds;
+        startTime = DateTime.Now;
+        int score = CalculateScore();
+        Global.UpdateHighScore(score);
+        data.timeTaken = timeTaken;
         data.numberOfDungeons = numDungeons;
         data.dungeonCount = currentDungeon;
         data.damageDealt = playerDamageDealt;
         data.damageTaken = playerDamageTaken;
         data.enemiesKilled = enemiesKilled;
+        data.highScore = score;
     }
 }

@@ -23,90 +23,51 @@ public class SettingsManager : MonoBehaviour
     private GameObject volumeSlider;
     [SerializeField]
     private GameObject[] volumeText;
-    private Resolution[] resolutions;
-    private FullScreenMode[] fullScreenModes = new FullScreenMode[]{FullScreenMode.Windowed, FullScreenMode.FullScreenWindow, FullScreenMode.ExclusiveFullScreen};
+    [SerializeField]
+    private GameObject colourblindModeSlider;
+    [SerializeField]
+    private GameObject[] colourblindModeText;
+    private Resolution[] AllowedResolutions;
     private string[] FullScreenModesStrings = new string[]{"Windowed", "Borderless", "Fullscreen"};
-    private int currentFullscreenModeIndex = 0; //0 = windowed, 1 = borderless, 2 = fullscreen
-    private int currentVolume = 100;
+    private string[] ColourblindModeStrings = new string[]{"Normal Vision", "Protanopia & Deuteranopia", "Tritanopia"};
+    private int fullscreenModeIndex = 0; //0 = windowed, 1 = borderless, 2 = fullscreen
+    private int volume = 100;
+    private int colourblindMode = 0; //0 = normal vision, 1 = protanopia & deuteranopia, 2 = tritanopia
     private int resolutionIndex = 0; //index of current resolution in resolutions array
-    private int originalResolutionIndex; //used for reset logic
-    private int originalVolume;
-    private int originalFullscreenModeIndex;
-    private Resolution currentResolution;
-    private FullScreenMode currentFullscreenMode;
+    private Resolution resolution;
     //Initializes settings to default settings or saved settings
     void Start()
     {
-        resolutions = Screen.resolutions; //gets all resolutions supported by monitor
-        resolutionSlider.GetComponent<UnityEngine.UI.Slider>().maxValue = resolutions.Length - 1; //set max value of resolution slider to number of resolutions
-        if (PlayerPrefs.HasKey("fullscreenmode")) //if there is a saved fullscreen mode
-        {
-            currentFullscreenModeIndex = PlayerPrefs.GetInt("fullscreenmode");
-        }
-        else //if there is no saved fullscreen mode, default to fullscreen
-        {
-            currentFullscreenModeIndex = 2;
-        }
-        originalFullscreenModeIndex = currentFullscreenModeIndex;
-        fullscreenSlider.GetComponent<UnityEngine.UI.Slider>().value = currentFullscreenModeIndex;
-        currentFullscreenMode = fullScreenModes[currentFullscreenModeIndex];
-        if (PlayerPrefs.HasKey("volume")) //if there is a saved volume
-        {
-            currentVolume = PlayerPrefs.GetInt("volume");
-        }
-        else //if there is no saved volume, default to 100
-        {
-            currentVolume = 100;
-        }
-        volumeSlider.GetComponent<UnityEngine.UI.Slider>().value = currentVolume;
-        originalVolume = currentVolume;
-        if (PlayerPrefs.HasKey("resolution")) //if there is a saved resolution
-        {
-            string res = PlayerPrefs.GetString("resolution");
-            if (resolutions.Select(x => x.ToString()).Contains(res)) //if saved resolution is supported by monitor
-            {
-                resolutionIndex = Array.IndexOf(resolutions.Select(x => x.ToString()).ToArray(), res);
-                currentResolution = resolutions[resolutionIndex];
-            }
-            else //if saved resolution is not supported by monitor, default to current resolution
-            {
-                currentResolution = Screen.currentResolution;
-                resolutionIndex = Array.IndexOf(resolutions, Screen.currentResolution);
-            }
-        }
-        else //if there is no saved resolution, default to current resolution, which is typically the highest supported resolution
-        {
-            currentResolution = Screen.currentResolution;
-            resolutionIndex = Array.IndexOf(resolutions, Screen.currentResolution);
-        }
-        resolutionSlider.GetComponent<UnityEngine.UI.Slider>().value = resolutionIndex;
-        originalResolutionIndex = resolutionIndex;
+        AllowedResolutions = Screen.resolutions; //gets all resolutions supported by monitor
+        resolutionSlider.GetComponent<UnityEngine.UI.Slider>().maxValue = AllowedResolutions.Length - 1; //set max value of resolution slider to number of resolutions
+        (fullscreenModeIndex, volume, resolutionIndex, resolution, colourblindMode) = SettingsLoader.LoadSettings();
+        UpdateSliderValues();
     }
 
     //Resets settings to values before changes were made
     public void Reset()
     {
-        currentFullscreenModeIndex = originalFullscreenModeIndex;
-        currentVolume = originalVolume;
-        resolutionIndex = originalResolutionIndex;
-        currentFullscreenMode = fullScreenModes[currentFullscreenModeIndex];
-        currentResolution = resolutions[resolutionIndex];
-        fullscreenSlider.GetComponent<UnityEngine.UI.Slider>().value = currentFullscreenModeIndex;
-        volumeSlider.GetComponent<UnityEngine.UI.Slider>().value = currentVolume;
+        //Reloads settings back to last applied state
+        MenuMusicManager.instance.PlayExit();
+        (fullscreenModeIndex, volume, resolutionIndex, resolution, colourblindMode) = SettingsLoader.LoadSettings();
+        UpdateSliderValues();
+    }
+
+    private void UpdateSliderValues()
+    //Sets the slider values to the currently selected settings
+    {
+        fullscreenSlider.GetComponent<UnityEngine.UI.Slider>().value = fullscreenModeIndex;
+        volumeSlider.GetComponent<UnityEngine.UI.Slider>().value = volume;
         resolutionSlider.GetComponent<UnityEngine.UI.Slider>().value = resolutionIndex;
+        colourblindModeSlider.GetComponent<UnityEngine.UI.Slider>().value = colourblindMode;
     }
 
     //Applies settings to game, saves settings to player prefs
     public void Apply()
     {
-        PlayerPrefs.SetInt("fullscreenmode", currentFullscreenModeIndex);
-        PlayerPrefs.SetInt("volume", currentVolume);
-        PlayerPrefs.SetString("resolution", currentResolution.ToString());
-        Screen.SetResolution(currentResolution.width, currentResolution.height, currentFullscreenMode);
-        AudioListener.volume = currentVolume / 100f;
-        originalFullscreenModeIndex = currentFullscreenModeIndex;
-        originalVolume = currentVolume;
-        originalResolutionIndex = resolutionIndex;
+        MenuMusicManager.instance.PlayAccept();
+        SettingsLoader.SaveSettings(fullscreenModeIndex, volume, resolution, colourblindMode);
+        SettingsLoader.ApplySettings(fullscreenModeIndex, volume, resolution, colourblindMode);
     }
 
     //Returns to menu
@@ -116,32 +77,40 @@ public class SettingsManager : MonoBehaviour
         SceneManager.LoadScene("Menu", LoadSceneMode.Single);
     }
 
-    //The following are all callbacks for the sliders, which update the values and text of the sliders
+    //The following are all callbacks for the sliders, which update the values of the settings and text of the sliders
     public void ChangeFullScreenValue(System.Single value)
     {
-        currentFullscreenModeIndex = (int)fullscreenSlider.GetComponent<UnityEngine.UI.Slider>().value;
-        currentFullscreenMode = fullScreenModes[currentFullscreenModeIndex];
+        fullscreenModeIndex = (int)fullscreenSlider.GetComponent<UnityEngine.UI.Slider>().value;
         foreach (GameObject text in fullscreenText)
         {
-            text.GetComponent<TextMeshProUGUI>().text = FullScreenModesStrings[currentFullscreenModeIndex];
+            text.GetComponent<TextMeshProUGUI>().text = FullScreenModesStrings[fullscreenModeIndex];
         }
     }
     public void ChangeResolutionValue(System.Single value)
     {
         resolutionIndex = (int)resolutionSlider.GetComponent<UnityEngine.UI.Slider>().value;
-        currentResolution = resolutions[resolutionIndex];
+        resolution = AllowedResolutions[resolutionIndex];
         foreach (GameObject text in resolutionText)
         {
-            text.GetComponent<TextMeshProUGUI>().text = currentResolution.ToString();
+            text.GetComponent<TextMeshProUGUI>().text = resolution.ToString();
         }
     }
 
     public void ChangeVolumeValue(System.Single value)
     {
-        currentVolume = (int)volumeSlider.GetComponent<UnityEngine.UI.Slider>().value;
+        volume = (int)volumeSlider.GetComponent<UnityEngine.UI.Slider>().value;
         foreach (GameObject text in volumeText)
         {
-            text.GetComponent<TextMeshProUGUI>().text = currentVolume.ToString() + "%";
+            text.GetComponent<TextMeshProUGUI>().text = volume.ToString() + "%";
+        }
+    }
+
+    public void ChangeColourblindValue(System.Single value)
+    {
+        colourblindMode = (int)colourblindModeSlider.GetComponent<UnityEngine.UI.Slider>().value;
+        foreach (GameObject text in colourblindModeText)
+        {
+            text.GetComponent<TextMeshProUGUI>().text = ColourblindModeStrings[colourblindMode];
         }
     }
 }

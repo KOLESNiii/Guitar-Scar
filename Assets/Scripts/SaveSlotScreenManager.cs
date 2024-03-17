@@ -19,6 +19,8 @@ public class SaveSlotScreenManager : MonoBehaviour
     [SerializeField]
     GameObject DungeonsClearedText;
     [SerializeField]
+    GameObject ScoreText;
+    [SerializeField]
     GameObject EmptySaveSlotMessage;
     [SerializeField]
     GameObject PlayerPrefab;
@@ -29,11 +31,15 @@ public class SaveSlotScreenManager : MonoBehaviour
     [SerializeField]
     GameObject SaveSlot3;
     GameData[] saveSlots = new GameData[3];
+    [SerializeField]
+    GameObject HighScoreText;
     int selectedSaveSlot = -1; //Selected save slot, -1 if none selected
     //Get the save slots from the game data manager
     void Start()
     {
         saveSlots = GameDataManager.Instance.getSaveSlots(true);
+        int highScore = GameDataManager.Instance.getHighScore();
+        HighScoreText.GetComponent<TMPro.TextMeshProUGUI>().text = "Highscore: " + highScore.ToString();
     }
     //Callback functions for save slot toggles, identical apart from selected save slot identity
     public void ToggleSaveSlot1(bool newValue)
@@ -70,6 +76,8 @@ public class SaveSlotScreenManager : MonoBehaviour
         {
             return;
         }
+        MenuMusicManager.instance.PlayGameMusic();
+        MenuMusicManager.instance.PlayAccept();
         GameDataManager.Instance.setSaveSlot(selectedSaveSlot, true); //Set the save slot in the game data manager
         GameObject player = Instantiate(PlayerPrefab, Vector3.zero, Quaternion.identity); //Instantiate the player
         DontDestroyOnLoad(player); //Don't destroy the player when loading a new scene
@@ -84,6 +92,8 @@ public class SaveSlotScreenManager : MonoBehaviour
         {
             return;
         }
+        MenuMusicManager.instance.PlayGameMusic();
+        MenuMusicManager.instance.PlayAccept();
         GameDataManager.Instance.setSaveSlot(selectedSaveSlot, true);
         GameDataManager.Instance.NewGame(); //Get an empty gameData object
         GameDataManager.Instance.OverwriteSaveSlot();  //Overwrite the save slot with the empty gameData object
@@ -104,6 +114,7 @@ public class SaveSlotScreenManager : MonoBehaviour
             EnemiesKilledText.GetComponent<TMPro.TextMeshProUGUI>().text = "-";
             PlayerLevelText.GetComponent<TMPro.TextMeshProUGUI>().text = "-";
             DungeonsClearedText.GetComponent<TMPro.TextMeshProUGUI>().text = "-";
+            ScoreText.GetComponent<TMPro.TextMeshProUGUI>().text = "-";
         }
         else if (saveSlots[selectedSaveSlot] == null) //If the selected save slot is empty
         {
@@ -113,6 +124,7 @@ public class SaveSlotScreenManager : MonoBehaviour
             EnemiesKilledText.GetComponent<TMPro.TextMeshProUGUI>().text = "-";
             PlayerLevelText.GetComponent<TMPro.TextMeshProUGUI>().text = "-";
             DungeonsClearedText.GetComponent<TMPro.TextMeshProUGUI>().text = "-";
+            ScoreText.GetComponent<TMPro.TextMeshProUGUI>().text = "-";
         }
         else //If the selected save slot is not empty
         {
@@ -122,6 +134,7 @@ public class SaveSlotScreenManager : MonoBehaviour
             EnemiesKilledText.GetComponent<TMPro.TextMeshProUGUI>().text = saveSlots[selectedSaveSlot].enemiesKilled.ToString();
             PlayerLevelText.GetComponent<TMPro.TextMeshProUGUI>().text = saveSlots[selectedSaveSlot].playerLevel.ToString();
             DungeonsClearedText.GetComponent<TMPro.TextMeshProUGUI>().text = saveSlots[selectedSaveSlot].dungeonCount.ToString();
+            ScoreText.GetComponent<TMPro.TextMeshProUGUI>().text =  saveSlots[selectedSaveSlot].highScore.ToString();
         }
     }
 }
